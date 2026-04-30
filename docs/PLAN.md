@@ -147,7 +147,7 @@ use flake github:vivshaw/tendril?dir=flakes/typescript
 
 ## tendril's own dev setup
 
-- `.envrc` with `use flake` so working on tendril auto-activates a shell containing `nixpkgs-fmt`, `nil` LSP, and `nix-tree` for debugging closures.
+- `.envrc` with `use flake` so working on tendril auto-activates a shell containing `nixfmt`, `nil` LSP, and `nix-tree` for debugging closures.
 - each `flakes/<lang>/` is independently testable: `nix develop ./flakes/go` should drop you into a working Go env with no umbrella involvement.
 
 ## phased delivery
@@ -166,11 +166,11 @@ use flake github:vivshaw/tendril?dir=flakes/typescript
 3. smoke test on macOS and Linux (CI or manual).
 
 **Phase 3 — solidify**
-1. README with consumer examples.
-2. decide on formatter (`nixpkgs-fmt` vs `alejandra`).
-3. optional: GitHub Actions running `nix flake check` on each push.
+1. ~~README with consumer examples.~~ — done.
+2. ~~decide on formatter~~ — settled: `nixfmt` (RFC 166 standard); also exposed as `formatter.<sys>` so `nix fmt` works for consumers.
+3. ~~optional: GitHub Actions running `nix flake check` on each push.~~ — done (`.github/workflows/ci.yml`, matrix over ubuntu/macos).
 
-**Phase 4+ — duild targets (deferred, but designed for)**
+**Phase 4+ — build targets (deferred, but designed for)**
 - `lib/mkDockerImage.nix` using `pkgs.dockerTools.buildLayeredImage`.
 - `lib/mkNixosModule.nix`.
 - `lib/mkVMImage.nix` via `nixos-generators`.
@@ -178,7 +178,6 @@ use flake github:vivshaw/tendril?dir=flakes/typescript
 
 ## open decisions (pick later)
 
-- nix formatter: `nixpkgs-fmt` (default-ish) vs `alejandra` (stricter, opinionated).
 - whether to publish a `polyglot` umbrella shell that includes every language at once, or leave composition to consumers.
 - whether `golangci-lint` belongs in the base Go module after we get real usage.
 - binary cache strategy if CI build times become annoying (Cachix vs self-hosted).

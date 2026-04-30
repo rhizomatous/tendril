@@ -10,11 +10,12 @@
 #   { packages = [...]; env = { FOO = "bar"; }; shellHook = "..."; }
 # we splat it into mkShell's call, then layer on the consumer's extras.
 
-{ pkgs
-, module
-, extraPackages ? [ ]   # additional packages to add to the shell
-, extraEnv ? { }        # additional env vars (override module env on collision)
-, extraShellHook ? ""   # bash appended after the module's shellHook
+{
+  pkgs,
+  module,
+  extraPackages ? [ ], # additional packages to add to the shell
+  extraEnv ? { }, # additional env vars (override module env on collision)
+  extraShellHook ? "", # bash appended after the module's shellHook
 }:
 
 pkgs.mkShell (

@@ -17,7 +17,12 @@
     };
   };
 
-  outputs = { self, nixpkgs, tendril-root }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      tendril-root,
+    }:
     let
       tendrilLib = import "${tendril-root}/lib" { inherit nixpkgs; };
       inherit (tendrilLib) forAllSystems mkShell mkLanguageLib;
@@ -25,13 +30,18 @@
       mkModule = import ./module.nix;
     in
     {
-      devShells = forAllSystems (system:
-        let pkgs = nixpkgs.legacyPackages.${system}; in {
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
           default = mkShell {
             inherit pkgs;
             module = mkModule { inherit pkgs; };
           };
-        });
+        }
+      );
 
       lib = mkLanguageLib mkModule;
     };

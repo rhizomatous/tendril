@@ -12,7 +12,8 @@
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-  outputs = { self, nixpkgs }:
+  outputs =
+    { self, nixpkgs }:
     let
       # shared helpers (see `./lib/default.nix`).
       tendrilLib = import ./lib { inherit nixpkgs; };
@@ -34,26 +35,39 @@
       # for each supported system, expose:
       #   - one named shell per language (e.g. `devShells.<sys>.typescript`)
       #   - a `default` shell for tendril dev (formatter, lsp, nix-tree)
-      devShells = forAllSystems (system:
-        let pkgs = nixpkgs.legacyPackages.${system}; in
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
         # `builtins.mapAttrs (name: value: ...) attrset` applies the function
         # to each (name, value) pair. we ignore the name (`_`) and use the
         # value (the module function) to build a shell.
-        (builtins.mapAttrs
-          (_: mkModule: mkShell {
+        (builtins.mapAttrs (
+          _: mkModule:
+          mkShell {
             inherit pkgs;
             module = mkModule { inherit pkgs; };
-          })
-          languages)
+          }
+        ) languages)
         # add the tendril-dev `default` shell alongside the per-language ones.
         // {
           default = pkgs.mkShell {
-            packages = with pkgs; [ nixpkgs-fmt nil nix-tree ];
+            packages = with pkgs; [
+              nixfmt
+              nil
+              nix-tree
+            ];
           };
-        });
+        }
+      );
 
       # `lib.<lang>.{module, mkShell}` for each language.
       # consumers bring their own `pkgs`.
       lib = builtins.mapAttrs (_: mkLanguageLib) languages;
+
+      # `nix fmt` reads this. exposed at the umbrella level so consumers
+      # pinning tendril can format their nix with our chosen tool.
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt);
     };
 }

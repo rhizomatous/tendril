@@ -10,7 +10,8 @@
 # (the `nodejs_24` derivation for aarch64-darwin is not the same store path
 # as for x86_64-linux). callers pass in the `pkgs` for their target system.
 
-{ pkgs }: {
+{ pkgs }:
+{
   # tools globally available on PATH inside the shell.
   # node 24 LTS, with npm and corepack bundled.
   # project-specific tools (typescript, eslint, prettier, vitest, ...) live

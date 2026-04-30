@@ -6,7 +6,8 @@
 #
 # `rec` lets sibling attributes reference each other.
 
-{ nixpkgs }: rec {
+{ nixpkgs }:
+rec {
   # the environment helper
   forAllSystems = import ./forAllSystems.nix { inherit nixpkgs; };
 
@@ -21,11 +22,22 @@
   # to extend the base shell without re-deriving it from scratch.
   mkLanguageLib = mkModule: {
     module = mkModule;
-    mkShell = { pkgs, extraPackages ? [ ], extraEnv ? { }, extraShellHook ? "" }:
+    mkShell =
+      {
+        pkgs,
+        extraPackages ? [ ],
+        extraEnv ? { },
+        extraShellHook ? "",
+      }:
       # call the canonical builder with the module evaluated for the
       # consumer's chosen `pkgs`.
       import ./mkShell.nix {
-        inherit pkgs extraPackages extraEnv extraShellHook;
+        inherit
+          pkgs
+          extraPackages
+          extraEnv
+          extraShellHook
+          ;
         module = mkModule { inherit pkgs; };
       };
   };

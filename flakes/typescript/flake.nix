@@ -30,7 +30,12 @@
 
   # `outputs` is a function from resolved inputs to the flake's output
   # attrset. `self` is a self-reference to this flake.
-  outputs = { self, nixpkgs, tendril-root }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      tendril-root,
+    }:
     let
       # `tendril-root` is a path in the nix store; interpolating it as a
       # string (`"${tendril-root}/lib"`) gives the absolute path that the
@@ -48,16 +53,21 @@
       # `devShells.<system>.<name>` is the canonical flake output for shells
       # entered via `nix develop`. `default` is the implicit choice when no
       # name is passed to `nix develop`.
-      devShells = forAllSystems (system:
+      devShells = forAllSystems (
+        system:
         # `legacyPackages` is nixpkgs' convention for "the entire package set
         # as an attrset, indexed by system". the name is historical — it is
         # not deprecated.
-        let pkgs = nixpkgs.legacyPackages.${system}; in {
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
           default = mkShell {
             inherit pkgs;
             module = mkModule { inherit pkgs; };
           };
-        });
+        }
+      );
 
       # `lib` is a free-form, system-agnostic flake output. consumers reach
       # it as `tendril-typescript.lib.{module, mkShell}` and pass their own
