@@ -1,0 +1,30 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: flake check (umbrella)
+        run: nix flake check
+
+      - name: flake check (typescript)
+        run: nix flake check ./flakes/typescript
+
+      - name: flake check (go)
+        run: nix flake check ./flakes/go
+
+      - name: format check
+        run: |
+          nix develop -c bash -c \
+            'find . -name "*.nix" -not -path "./.git/*" | xargs nixfmt --check'
