@@ -7,9 +7,6 @@
   # the lsp/debugger/editor-integration tools live here rather than in a
   # per-project `tools.go` because editors expect to find them on PATH
   # and don't pin versions per-project.
-  #
-  # `golangci-lint` is *not* bundled — projects pin it per-repo via go.mod's
-  # `tool` directive (or `tools.go`/`go run` for older projects).
   packages = with pkgs; [
     go_1_26 # compiler and `go` command
     gopls # language server
