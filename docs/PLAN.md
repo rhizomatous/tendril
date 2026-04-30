@@ -147,10 +147,10 @@ use flake github:vivshaw/tendril?dir=flakes/typescript
 
 ## tendril's own dev setup
 
-- `.envrc` with `use flake` so working on tendril auto-activates a shell containing `nixpkgs-fmt` (or `alejandra`), `nil` LSP, and `nix-tree` for debugging closures.
+- `.envrc` with `use flake` so working on tendril auto-activates a shell containing `nixpkgs-fmt`, `nil` LSP, and `nix-tree` for debugging closures.
 - each `flakes/<lang>/` is independently testable: `nix develop ./flakes/go` should drop you into a working Go env with no umbrella involvement.
 
-## Phased delivery
+## phased delivery
 
 **Phase 1 — skeleton & TS**
 1. initialize `tendril/` as a git repo, add `.gitignore`, README stub.
