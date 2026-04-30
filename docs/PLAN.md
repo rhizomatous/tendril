@@ -99,7 +99,7 @@ globally installed:
 - `gotools` — `goimports`, etc. (editor integrations).
 
 not bundled:
-- `golangci-lint` — pinnable per-project via `tools.go` or `go run`.
+- `golangci-lint` — pinnable per-project via the `tool` directive in `go.mod` (Go 1.24+), or `tools.go`/`go run` for older projects.
 
 ## platform support
 

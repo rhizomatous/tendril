@@ -27,6 +27,7 @@
       # one branch, `x86_64-linux` pkgs in another, etc.
       languages = {
         typescript = import ./flakes/typescript/module.nix;
+        go = import ./flakes/go/module.nix;
       };
     in
     {

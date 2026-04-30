@@ -1,4 +1,4 @@
-# standalone typescript flake — directly consumable via:
+# standalone typescript flake. directly consumable via:
 #   nix develop github:rhizomatous/tendril?dir=flakes/typescript
 #
 # also re-exported by the umbrella `flake.nix` at the repo root, so consumers
