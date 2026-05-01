@@ -14,6 +14,9 @@ rec {
   # the `module -> devShell` builder.
   mkShell = import ./mkShell.nix;
 
+  # combine N modules into one (for polyglot shells); see ./mergeModules.nix.
+  mergeModules = import ./mergeModules.nix;
+
   # the `module -> { module, mkShell }` public-api adapter; see ./mkLanguageLib.nix.
   mkLanguageLib = import ./mkLanguageLib.nix { inherit mkShell; };
 }

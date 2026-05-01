@@ -44,6 +44,17 @@ see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
 
 `mkShell` accepts `extraPackages`, `extraEnv`, and `extraShellHook` for layering on top of the base shell.
 
+### one shell with everything
+
+```nix
+{
+  inputs.tendril.url = "github:rhizomatous/tendril?dir=nix";
+  outputs = { self, nixpkgs, tendril, ... }: {
+    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.full;
+  };
+}
+```
+
 ### direnv
 
 ```bash

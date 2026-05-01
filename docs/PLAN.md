@@ -181,7 +181,7 @@ use flake github:rhizomatous/tendril?dir=nix/flakes/typescript
 
 ## open decisions (pick later)
 
-- whether to publish a `polyglot` umbrella shell that includes every language at once, or leave composition to consumers.
+- ~~whether to publish a `polyglot` umbrella shell~~ — settled: `devShells.<sys>.full` (umbrella only) merges every language module into one shell, via `lib/mergeModules.nix`.
 - whether `golangci-lint` belongs in the base Go module after we get real usage.
 - binary cache strategy if CI build times become annoying (Cachix vs self-hosted).
 

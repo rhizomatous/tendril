@@ -17,13 +17,18 @@
     let
       # shared helpers (see `./lib/default.nix`).
       tendrilLib = import ./lib { inherit nixpkgs; };
-      inherit (tendrilLib) forAllSystems mkShell mkLanguageLib;
+      inherit (tendrilLib)
+        forAllSystems
+        mkShell
+        mergeModules
+        mkLanguageLib
+        ;
 
       # registry of languages tendril knows about. adding a new language is a
       # one-line addition here, plus a `flakes/<lang>/module.nix`.
       #
       # values are module *functions* (`{ pkgs } -> module`), not modules.
-      # we delay evaluation until we know which system's `pkgs` to use —
+      # we delay evaluation until we know which system's `pkgs` to use.
       # the same module function gets called with `aarch64-darwin` pkgs in
       # one branch, `x86_64-linux` pkgs in another, etc.
       languages = {
@@ -58,6 +63,12 @@
               nil
               nix-tree
             ];
+          };
+          # `full` is the polyglot shell — every registered language merged
+          # into one. consumers reach it as `tendril.devShells.<sys>.full`.
+          full = mkShell {
+            inherit pkgs;
+            module = mergeModules (map (mkModule: mkModule { inherit pkgs; }) (builtins.attrValues languages));
           };
         }
       );
