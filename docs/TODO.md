@@ -1,5 +1,4 @@
 - [ ] what would flake-utils or flake-parts get us?
 - [ ] retool plan doc into design doc
 - [ ] pull tendril's own nix config into a lang flake
-- [ ] internal restructure- pull nix into src, puts langs in a folder by that name, extract mkLanguageLib maybe
 - [ ] build a setup/launcher util. set up Nix and any other prereqs? provide scaffold commands for projects? install script?

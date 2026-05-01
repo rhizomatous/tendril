@@ -1,8 +1,8 @@
 # standalone go flake. directly consumable via:
-#   nix develop github:rhizomatous/tendril?dir=flakes/go
+#   nix develop github:rhizomatous/tendril?dir=nix/flakes/go
 #
-# also re-exported by the umbrella `flake.nix` at the repo root, so consumers
-# pinning `github:rhizomatous/tendril` can reach this as
+# also re-exported by the umbrella `flake.nix` at `nix/flake.nix`, so consumers
+# pinning `github:rhizomatous/tendril?dir=nix` can reach this as
 # `tendril.devShells.<sys>.go` and `tendril.lib.go`.
 {
   description = "tendril go: go 1.26 dev shell";

@@ -4,11 +4,11 @@ a polyglot **dev environment library**, distributed as Nix flakes. other project
 
 ## goals
 
-- expose per-language flakes that downstream projects can pin (e.g. `inputs.tendril-go.url = "github:vivshaw/tendril?dir=flakes/go"`).
+- expose per-language flakes that downstream projects can pin (e.g. `inputs.tendril-go.url = "github:rhizomatous/tendril?dir=nix/flakes/go"`).
 - keep the *globally installed* surface minimal: only tools that genuinely cannot live in a project's `package.json` / `go.mod`.
 - structure each language as a reusable **module** (a package set + env + hooks) so the same module can drive a `devShell` today and a `dockerTools` image or NixOS module tomorrow.
 - cross-platform from day one: `aarch64-darwin`, `x86_64-darwin`, `x86_64-linux`, `aarch64-linux`.
-- stay extensible: adding a new language is a new directory under `flakes/`; adding a new build target (Docker, OCI, NixOS VM, nixos-generators) is a new builder under `lib/`.
+- stay extensible: adding a new language is a new directory under `nix/flakes/`; adding a new build target (Docker, OCI, NixOS VM, nixos-generators) is a new builder under `nix/lib/`.
 
 ## non-goals (for now)
 
@@ -20,34 +20,37 @@ a polyglot **dev environment library**, distributed as Nix flakes. other project
 
 ```
 tendril/
-├── flake.nix                # umbrella flake: aggregates per-language outputs
-├── flake.lock
-├── flakes/
-│   ├── typescript/
-│   │   ├── flake.nix        # standalone TS flake (consumable directly)
-│   │   └── module.nix       # { packages, env, shellHook } — the reusable unit
-│   └── go/
-│       ├── flake.nix
-│       └── module.nix
-├── lib/
-│   ├── default.nix          # re-exports
-│   ├── forAllSystems.nix    # tiny helper: genAttrs over supported systems
-│   └── mkShell.nix          # module → devShell (the only builder in v1)
-├── docs/
-│   └── PLAN.md              # this file
-├── .envrc                   # `use flake` — for tendril's own dev only
+├── README.md
 ├── .gitignore
-└── README.md
+├── .envrc                       # `use flake ./nix` — for tendril's own dev only
+├── docs/
+│   └── PLAN.md                  # this file
+├── .github/workflows/ci.yml
+└── nix/
+    ├── flake.nix                # umbrella flake: aggregates per-language outputs
+    ├── flake.lock
+    ├── flakes/
+    │   ├── typescript/
+    │   │   ├── flake.nix        # standalone TS flake (consumable directly)
+    │   │   └── module.nix       # { packages, env, shellHook } — the reusable unit
+    │   └── go/
+    │       ├── flake.nix
+    │       └── module.nix
+    └── lib/
+        ├── default.nix          # re-exports
+        ├── forAllSystems.nix    # tiny helper: genAttrs over supported systems
+        ├── mkShell.nix          # module → devShell (the only builder in v1)
+        └── mkLanguageLib.nix    # module → { module, mkShell } public-api adapter
 ```
 
-rationale: each language directory is self-contained and consumable as its own flake (via the `?dir=` flake-ref subpath). the umbrella at the root re-exports everything for consumers who want one input.
+rationale: each language directory is self-contained and consumable as its own flake (via the `?dir=` flake-ref subpath). the umbrella at `nix/flake.nix` re-exports everything for consumers who want one input. all nix machinery lives under `nix/` to keep the repo root focused on docs/CI/direnv.
 
 ## the module abstraction
 
 each language exposes a plain attrset describing its toolchain:
 
 ```nix
-# flakes/go/module.nix
+# nix/flakes/go/module.nix
 { pkgs }: {
   packages = with pkgs; [ go_1_26 gopls delve gotools ];
   env = { GOTOOLCHAIN = "local"; };
@@ -68,7 +71,7 @@ adding a new builder never requires touching language modules; adding a new lang
 
 each `flakes/<lang>/flake.nix` exposes:
 
-- `devShells.<system>.default` — directly consumable: `nix develop github:vivshaw/tendril?dir=flakes/go`
+- `devShells.<system>.default` — directly consumable: `nix develop github:rhizomatous/tendril?dir=nix/flakes/go`
 - `lib.module` — the raw module attrset (consumers compose with their own packages)
 - `lib.mkShell { extraPackages ? [], extraEnv ? {} }` — a builder that lets consumers extend the base shell without re-deriving it
 
@@ -82,7 +85,7 @@ the root `flake.nix` re-exports:
 
 ## per-language specifics
 
-### TypeScript (`flakes/typescript/`)
+### TypeScript (`nix/flakes/typescript/`)
 
 globally installed (in the flake):
 - `nodejs_24` — Node 24 LTS (Active LTS through Apr 2027, maintenance through Apr 2028). includes `npm` and `corepack`.
@@ -90,7 +93,7 @@ globally installed (in the flake):
 not bundled (consumer's `package.json` owns these):
 - `typescript`, `eslint`, `prettier`, `vitest`, `ts-node`, etc.
 
-### Go (`flakes/go/`)
+### Go (`nix/flakes/go/`)
 
 globally installed:
 - `go_1_26` — Go 1.26.x compiler and `go` command.
@@ -115,7 +118,7 @@ systems = [ "aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux" ];
 
 ```nix
 {
-  inputs.tendril-go.url = "github:vivshaw/tendril?dir=flakes/go";
+  inputs.tendril-go.url = "github:rhizomatous/tendril?dir=nix/flakes/go";
   outputs = { self, nixpkgs, tendril-go, ... }: {
     devShells.aarch64-darwin.default = tendril-go.devShells.aarch64-darwin.default;
   };
@@ -126,7 +129,7 @@ systems = [ "aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux" ];
 
 ```nix
 {
-  inputs.tendril.url = "github:vivshaw/tendril";
+  inputs.tendril.url = "github:rhizomatous/tendril?dir=nix";
   outputs = { self, nixpkgs, tendril, ... }: let
     pkgs = import nixpkgs { system = "aarch64-darwin"; };
   in {
@@ -142,26 +145,26 @@ systems = [ "aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux" ];
 
 ```bash
 # .envrc in the consumer repo
-use flake github:vivshaw/tendril?dir=flakes/typescript
+use flake github:rhizomatous/tendril?dir=nix/flakes/typescript
 ```
 
 ## tendril's own dev setup
 
-- `.envrc` with `use flake` so working on tendril auto-activates a shell containing `nixfmt`, `nil` LSP, and `nix-tree` for debugging closures.
-- each `flakes/<lang>/` is independently testable: `nix develop ./flakes/go` should drop you into a working Go env with no umbrella involvement.
+- `.envrc` with `use flake ./nix` so working on tendril auto-activates a shell containing `nixfmt`, `nil` LSP, and `nix-tree` for debugging closures.
+- each `nix/flakes/<lang>/` is independently testable: `nix develop ./nix/flakes/go` should drop you into a working Go env with no umbrella involvement.
 
 ## phased delivery
 
 **Phase 1 — skeleton & TS**
 1. initialize `tendril/` as a git repo, add `.gitignore`, README stub.
-2. write `lib/forAllSystems.nix` and `lib/mkShell.nix`.
-3. implement `flakes/typescript/{flake.nix,module.nix}`.
-4. wire up the umbrella `flake.nix` to re-export TS.
-5. smoke test: `nix develop ./flakes/typescript`, `node --version`, `npm init -y`.
+2. write `nix/lib/forAllSystems.nix` and `nix/lib/mkShell.nix`.
+3. implement `nix/flakes/typescript/{flake.nix,module.nix}`.
+4. wire up the umbrella `nix/flake.nix` to re-export TS.
+5. smoke test: `nix develop ./nix/flakes/typescript`, `node --version`, `npm init -y`.
 6. `.envrc` for tendril dev.
 
 **Phase 2 — Go**
-1. implement `flakes/go/{flake.nix,module.nix}`.
+1. implement `nix/flakes/go/{flake.nix,module.nix}`.
 2. add Go to umbrella outputs.
 3. smoke test on macOS and Linux (CI or manual).
 
@@ -171,9 +174,9 @@ use flake github:vivshaw/tendril?dir=flakes/typescript
 3. ~~optional: GitHub Actions running `nix flake check` on each push.~~ — done (`.github/workflows/ci.yml`, matrix over ubuntu/macos).
 
 **Phase 4+ — build targets (deferred, but designed for)**
-- `lib/mkDockerImage.nix` using `pkgs.dockerTools.buildLayeredImage`.
-- `lib/mkNixosModule.nix`.
-- `lib/mkVMImage.nix` via `nixos-generators`.
+- `nix/lib/mkDockerImage.nix` using `pkgs.dockerTools.buildLayeredImage`.
+- `nix/lib/mkNixosModule.nix`.
+- `nix/lib/mkVMImage.nix` via `nixos-generators`.
 - each is a new function over the existing module attrset; no language flake needs to change.
 
 ## open decisions (pick later)

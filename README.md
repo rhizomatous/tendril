@@ -19,7 +19,7 @@ see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
 
 ```nix
 {
-  inputs.tendril-go.url = "github:rhizomatous/tendril?dir=flakes/go";
+  inputs.tendril-go.url = "github:rhizomatous/tendril?dir=nix/flakes/go";
   outputs = { self, nixpkgs, tendril-go, ... }: {
     devShells.aarch64-darwin.default = tendril-go.devShells.aarch64-darwin.default;
   };
@@ -30,7 +30,7 @@ see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
 
 ```nix
 {
-  inputs.tendril.url = "github:rhizomatous/tendril";
+  inputs.tendril.url = "github:rhizomatous/tendril?dir=nix";
   outputs = { self, nixpkgs, tendril, ... }: let
     pkgs = import nixpkgs { system = "aarch64-darwin"; };
   in {
@@ -48,7 +48,7 @@ see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
 
 ```bash
 # .envrc in the consumer repo
-use flake github:rhizomatous/tendril?dir=flakes/typescript
+use flake github:rhizomatous/tendril?dir=nix/flakes/typescript
 ```
 
 ## platforms
@@ -58,8 +58,8 @@ use flake github:rhizomatous/tendril?dir=flakes/typescript
 ## developing tendril
 
 ```bash
-direnv allow                       # auto-activates dev shell on cd
-nix fmt path/to/file.nix           # format with nixfmt
-nix flake check                    # evaluate all outputs
-nix develop ./flakes/<lang>        # standalone per-language shell
+direnv allow                          # auto-activates dev shell on cd
+nixfmt path/to/file.nix               # format (nixfmt on PATH via dev shell)
+nix flake check ./nix                 # evaluate all outputs
+nix develop ./nix/flakes/<lang>       # standalone per-language shell
 ```

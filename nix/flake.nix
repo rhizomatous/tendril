@@ -1,6 +1,6 @@
 # this umbrella flake re-exports each language's dev shell and lib in one place,
 # so consumers can pin a single input
-#   inputs.tendril.url = "github:vivshaw/tendril";
+#   inputs.tendril.url = "github:rhizomatous/tendril?dir=nix";
 # and reach everything via
 #   tendril.devShells.<sys>.<lang>          (e.g. ...typescript)
 #   tendril.lib.<lang>.{module, mkShell}    (e.g. tendril.lib.typescript.mkShell)

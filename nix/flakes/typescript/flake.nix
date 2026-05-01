@@ -1,8 +1,8 @@
 # standalone typescript flake. directly consumable via:
-#   nix develop github:rhizomatous/tendril?dir=flakes/typescript
+#   nix develop github:rhizomatous/tendril?dir=nix/flakes/typescript
 #
-# also re-exported by the umbrella `flake.nix` at the repo root, so consumers
-# pinning `github:rhizomatous/tendril` can reach this as
+# also re-exported by the umbrella `flake.nix` at `nix/flake.nix`, so consumers
+# pinning `github:rhizomatous/tendril?dir=nix` can reach this as
 # `tendril.devShells.<sys>.typescript` and `tendril.lib.typescript`.
 {
   description = "tendril typescript: node 24 dev shell";
@@ -18,8 +18,8 @@
     # `flake = false` means "don't evaluate as a flake, just expose the
     # files" — avoids circular flake evaluation and an unnecessary lockfile
     # input. the `path:../..` form works for both:
-    #   - local dev: `nix develop ./flakes/typescript`
-    #   - published: `github:vivshaw/tendril?dir=flakes/typescript`
+    #   - local dev: `nix develop ./nix/flakes/typescript`
+    #   - published: `github:rhizomatous/tendril?dir=nix/flakes/typescript`
     # (in the published case, the whole repo is copied to the nix store, so
     # `../..` resolves to the parent within that store path.)
     tendril-root = {
