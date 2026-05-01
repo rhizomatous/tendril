@@ -34,38 +34,38 @@
       languages = {
         typescript = import ./flakes/typescript/module.nix;
         go = import ./flakes/go/module.nix;
+        nix = import ./flakes/nix/module.nix;
       };
     in
     {
       # for each supported system, expose:
       #   - one named shell per language (e.g. `devShells.<sys>.typescript`)
-      #   - a `default` shell for tendril dev (formatter, lsp, nix-tree)
+      #   - `default`, aliased to the nix shell: what `.envrc` activates
+      #   - `full`, a polyglot shell merging every registered language
       devShells = forAllSystems (
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
+
+          # `builtins.mapAttrs (name: value: ...) attrset` applies the function
+          # to each (name, value) pair. we ignore the name (`_`) and use the
+          # value (the module function) to build a shell.
+          languageShells = builtins.mapAttrs (
+            _: mkModule:
+            mkShell {
+              inherit pkgs;
+              module = mkModule { inherit pkgs; };
+            }
+          ) languages;
         in
-        # `builtins.mapAttrs (name: value: ...) attrset` applies the function
-        # to each (name, value) pair. we ignore the name (`_`) and use the
-        # value (the module function) to build a shell.
-        (builtins.mapAttrs (
-          _: mkModule:
-          mkShell {
-            inherit pkgs;
-            module = mkModule { inherit pkgs; };
-          }
-        ) languages)
-        # add the tendril-dev `default` shell alongside the per-language ones.
+        languageShells
         // {
-          default = pkgs.mkShell {
-            packages = with pkgs; [
-              nixfmt
-              nil
-              nix-tree
-            ];
-          };
-          # `full` is the polyglot shell — every registered language merged
-          # into one. consumers reach it as `tendril.devShells.<sys>.full`.
+          # `.envrc` does `use flake ./nix`, which activates `default`. the
+          # nix shell (nixfmt + nil + nix-tree) is what we want for working
+          # on tendril, so alias it here.
+          default = languageShells.nix;
+
+          # consumers reach the polyglot shell as `tendril.devShells.<sys>.full`.
           full = mkShell {
             inherit pkgs;
             module = mergeModules (map (mkModule: mkModule { inherit pkgs; }) (builtins.attrValues languages));

@@ -33,13 +33,17 @@ tendril/
     │   ├── typescript/
     │   │   ├── flake.nix        # standalone TS flake (consumable directly)
     │   │   └── module.nix       # { packages, env, shellHook } — the reusable unit
-    │   └── go/
+    │   ├── go/
+    │   │   ├── flake.nix
+    │   │   └── module.nix
+    │   └── nix/
     │       ├── flake.nix
     │       └── module.nix
     └── lib/
         ├── default.nix          # re-exports
         ├── forAllSystems.nix    # tiny helper: genAttrs over supported systems
         ├── mkShell.nix          # module → devShell (the only builder in v1)
+        ├── mergeModules.nix     # combine N modules into one (for the `full` shell)
         └── mkLanguageLib.nix    # module → { module, mkShell } public-api adapter
 ```
 
@@ -103,6 +107,18 @@ globally installed:
 
 not bundled:
 - `golangci-lint` — pinnable per-project via the `tool` directive in `go.mod` (Go 1.24+), or `tools.go`/`go run` for older projects.
+
+### Nix (`nix/flakes/nix/`)
+
+globally installed:
+- `nixfmt` — formatter (RFC 166 standard).
+- `nil` — language server.
+- `nix-tree` — interactive closure inspector.
+
+not bundled:
+- `statix`, `deadnix`, etc. — pinnable per-project as needed.
+
+the umbrella's `devShells.<sys>.default` aliases this shell, so `.envrc` (`use flake ./nix`) activates the nix tooling for working on tendril itself.
 
 ## platform support
 

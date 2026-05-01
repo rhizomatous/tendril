@@ -24,6 +24,9 @@ jobs:
       - name: flake check (go)
         run: nix flake check ./nix/flakes/go
 
+      - name: flake check (nix)
+        run: nix flake check ./nix/flakes/nix
+
       - name: format check
         run: |
           nix develop ./nix -c bash -c \

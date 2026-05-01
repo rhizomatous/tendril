@@ -2,3 +2,4 @@
 - [ ] retool plan doc into design doc
 - [ ] pull tendril's own nix config into a lang flake
 - [ ] build a setup/launcher util. set up Nix and any other prereqs? provide scaffold commands for projects? install script?
+- [ ] git hooks

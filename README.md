@@ -12,6 +12,7 @@ see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
 | ---------- | -------------------------------------- | ------------------------------------- |
 | typescript | `nodejs_24`                            | `typescript`, `eslint`, `prettier`, … |
 | go         | `go_1_26`, `gopls`, `delve`, `gotools` | `golangci-lint`, …                    |
+| nix        | `nixfmt`, `nil`, `nix-tree`            | `statix`, `deadnix`, …                |
 
 ## consuming
 
