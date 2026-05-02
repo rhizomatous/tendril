@@ -44,10 +44,11 @@
 
       # `inherit (set) a b c` is sugar for `a = set.a; b = set.b; c = set.c;` —
       # pulls specific attribute names from an attrset into local scope.
-      inherit (tendrilLib) forAllSystems mkShell mkLanguageLib;
+      inherit (tendrilLib) forAllSystems mkLanguageLib;
 
-      # the per-language module function. see `./module.nix.`
-      mkModule = import ./module.nix;
+      # wrap `./module.nix` with the public-api adapter; `langLib.mkShell`
+      # auto-composes the IDE module so the dev shell has an editor.
+      langLib = mkLanguageLib (import ./module.nix);
     in
     {
       # `devShells.<system>.<name>` is the canonical flake output for shells
@@ -62,10 +63,7 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          default = mkShell {
-            inherit pkgs;
-            module = mkModule { inherit pkgs; };
-          };
+          default = langLib.mkShell { inherit pkgs; };
         }
       );
 
@@ -73,6 +71,6 @@
       # it as `tendril-typescript.lib.{module, mkShell}` and pass their own
       # `pkgs`, so they don't have to commit to a `nixpkgs` revision they
       # don't already have.
-      lib = mkLanguageLib mkModule;
+      lib = langLib;
     };
 }

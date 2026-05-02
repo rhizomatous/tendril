@@ -16,8 +16,6 @@ mkModule: {
       extraEnv ? { },
       extraShellHook ? "",
     }:
-    # call the canonical builder with the module evaluated for the
-    # consumer's chosen `pkgs`.
     mkShell {
       inherit
         pkgs

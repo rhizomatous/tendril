@@ -15,7 +15,7 @@ rec {
   mkShell = import ./mkShell.nix;
 
   # combine N modules into one (for polyglot shells); see ./mergeModules.nix.
-  mergeModules = import ./mergeModules.nix;
+  mergeModules = import ./mergeModules.nix { lib = nixpkgs.lib; };
 
   # the `module -> { module, mkShell }` public-api adapter; see ./mkLanguageLib.nix.
   mkLanguageLib = import ./mkLanguageLib.nix { inherit mkShell; };

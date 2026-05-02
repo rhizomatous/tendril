@@ -36,9 +36,12 @@ tendril/
     │   ├── go/
     │   │   ├── flake.nix
     │   │   └── module.nix
-    │   └── nix/
+    │   ├── nix/
+    │   │   ├── flake.nix
+    │   │   └── module.nix
+    │   └── ide/
     │       ├── flake.nix
-    │       └── module.nix
+    │       └── module.nix          # neovim, composed into every language shell
     └── lib/
         ├── default.nix          # re-exports
         ├── forAllSystems.nix    # tiny helper: genAttrs over supported systems
@@ -119,6 +122,15 @@ not bundled:
 - `statix`, `deadnix`, etc. — pinnable per-project as needed.
 
 the umbrella's `devShells.<sys>.default` aliases this shell, so `.envrc` (`use flake ./nix`) activates the nix tooling for working on tendril itself.
+
+### IDE (`nix/flakes/ide/`)
+
+cross-cutting module — not a language. auto-composed into every language shell built via `mkLanguageLib`, so entering any tendril shell gives you an editor on PATH.
+
+globally installed:
+- `neovim` — bare for v1; growth path is configured nvim with lspconfig wired to our language-server packages, or wholesale nixvim.
+
+the IDE flake itself (`nix/flakes/ide/flake.nix`) exists for symmetry and as an escape hatch — consumers can pin it directly (`?dir=nix/flakes/ide`) to reach `lib.module` and compose the IDE into their own shells. rarely needed in practice.
 
 ## platform support
 

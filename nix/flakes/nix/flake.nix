@@ -25,9 +25,9 @@
     }:
     let
       tendrilLib = import "${tendril-root}/lib" { inherit nixpkgs; };
-      inherit (tendrilLib) forAllSystems mkShell mkLanguageLib;
+      inherit (tendrilLib) forAllSystems mkLanguageLib;
 
-      mkModule = import ./module.nix;
+      langLib = mkLanguageLib (import ./module.nix);
     in
     {
       devShells = forAllSystems (
@@ -36,13 +36,10 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          default = mkShell {
-            inherit pkgs;
-            module = mkModule { inherit pkgs; };
-          };
+          default = langLib.mkShell { inherit pkgs; };
         }
       );
 
-      lib = mkLanguageLib mkModule;
+      lib = langLib;
     };
 }

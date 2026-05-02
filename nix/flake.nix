@@ -66,6 +66,8 @@
           default = languageShells.nix;
 
           # consumers reach the polyglot shell as `tendril.devShells.<sys>.full`.
+          # each language module already composes the IDE; `mergeModules`
+          # de-dupes its `packages` list so neovim appears once.
           full = mkShell {
             inherit pkgs;
             module = mergeModules (map (mkModule: mkModule { inherit pkgs; }) (builtins.attrValues languages));
