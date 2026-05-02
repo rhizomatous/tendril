@@ -46,7 +46,7 @@ tendril/
         ├── default.nix          # re-exports
         ├── forAllSystems.nix    # tiny helper: genAttrs over supported systems
         ├── mkShell.nix          # module → devShell (the only builder in v1)
-        ├── mergeModules.nix     # combine N modules into one (for the `full` shell)
+        ├── mergeModules.nix     # combine N modules into one
         └── mkLanguageLib.nix    # module → { module, mkShell } public-api adapter
 ```
 
@@ -121,7 +121,7 @@ globally installed:
 not bundled:
 - `statix`, `deadnix`, etc. — pinnable per-project as needed.
 
-the umbrella's `devShells.<sys>.default` aliases this shell, so `.envrc` (`use flake ./nix`) activates the nix tooling for working on tendril itself.
+consumers reach the nix tooling as `tendril.devShells.<sys>.nix`. tendril's own `.envrc` activates the polyglot `full` shell (which includes nix), so this set is on PATH whenever you're working on the repo.
 
 ### IDE (`nix/flakes/ide/`)
 
@@ -178,7 +178,7 @@ use flake github:rhizomatous/tendril?dir=nix/flakes/typescript
 
 ## tendril's own dev setup
 
-- `.envrc` with `use flake ./nix` so working on tendril auto-activates a shell containing `nixfmt`, `nil` LSP, and `nix-tree` for debugging closures.
+- `.envrc` with `use flake ./nix` so working on tendril auto-activates the umbrella's polyglot `default` shell — every language's toolchain plus the IDE module, since tendril is itself a polyglot dev env library.
 - each `nix/flakes/<lang>/` is independently testable: `nix develop ./nix/flakes/go` should drop you into a working Go env with no umbrella involvement.
 
 ## phased delivery
@@ -209,7 +209,7 @@ use flake github:rhizomatous/tendril?dir=nix/flakes/typescript
 
 ## open decisions (pick later)
 
-- ~~whether to publish a `polyglot` umbrella shell~~ — settled: `devShells.<sys>.full` (umbrella only) merges every language module into one shell, via `lib/mergeModules.nix`.
+- ~~whether to publish a `polyglot` umbrella shell~~ — settled: `devShells.<sys>.default` (umbrella only) merges every language module into one shell, via `lib/mergeModules.nix`.
 - whether `golangci-lint` belongs in the base Go module after we get real usage.
 - binary cache strategy if CI build times become annoying (Cachix vs self-hosted).
 

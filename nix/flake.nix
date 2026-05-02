@@ -40,8 +40,8 @@
     {
       # for each supported system, expose:
       #   - one named shell per language (e.g. `devShells.<sys>.typescript`)
-      #   - `default`, aliased to the nix shell: what `.envrc` activates
-      #   - `full`, a polyglot shell merging every registered language
+      #   - `default`, the polyglot shell merging every registered language
+      #     (what `.envrc` activates and `nix develop` picks by default)
       devShells = forAllSystems (
         system:
         let
@@ -60,15 +60,9 @@
         in
         languageShells
         // {
-          # `.envrc` does `use flake ./nix`, which activates `default`. the
-          # nix shell (nixfmt + nil + nix-tree) is what we want for working
-          # on tendril, so alias it here.
-          default = languageShells.nix;
-
-          # consumers reach the polyglot shell as `tendril.devShells.<sys>.full`.
-          # each language module already composes the IDE; `mergeModules`
-          # de-dupes its `packages` list so neovim appears once.
-          full = mkShell {
+          # the polyglot default. each language module already composes the IDE,
+          # so `mergeModules` de-dupes `packages` so neovim appears once.
+          default = mkShell {
             inherit pkgs;
             module = mergeModules (map (mkModule: mkModule { inherit pkgs; }) (builtins.attrValues languages));
           };
