@@ -1,16 +1,10 @@
-# standalone go flake. directly consumable via:
-#   nix develop github:rhizomatous/tendril?dir=nix/flakes/go
-#
-# also re-exported by the umbrella `flake.nix` at `nix/flake.nix`, so consumers
-# pinning `github:rhizomatous/tendril?dir=nix` can reach this as
-# `tendril.devShells.<sys>.go` and `tendril.lib.go`.
+# standalone go flake.
 {
   description = "tendril go: go 1.26 dev shell";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # see `flakes/typescript/flake.nix` for an explanation of `path:../..`.
     tendril-root = {
       url = "path:../..";
       flake = false;

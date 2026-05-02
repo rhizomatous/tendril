@@ -1,5 +1,4 @@
-# standalone ide flake. directly consumable via:
-#   nix develop github:rhizomatous/tendril?dir=nix/flakes/ide
+# standalone ide flake.
 #
 # consumers usually don't need to pin this directly. the IDE module is
 # auto-composed into every language shell built by tendril.
@@ -9,7 +8,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # see `flakes/typescript/flake.nix` for an explanation of `path:../..`.
     tendril-root = {
       url = "path:../..";
       flake = false;

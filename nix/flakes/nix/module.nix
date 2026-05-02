@@ -1,6 +1,4 @@
 # the nix dev environment, expressed as a reusable `module`.
-#
-# composes the IDE module so the resulting shell has an editor on PATH.
 
 { pkgs }:
 let
