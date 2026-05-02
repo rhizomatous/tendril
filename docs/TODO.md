@@ -2,3 +2,4 @@
 - [ ] retool plan doc into design doc
 - [ ] build a setup/launcher util. set up Nix and any other prereqs? provide scaffold commands for projects? install script?
 - [ ] git hooks
+- [ ] each env should set an env var so it's easy to programmatically tell which you're in

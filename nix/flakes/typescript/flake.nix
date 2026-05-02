@@ -13,11 +13,16 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    nixvim = {
+      url = "github:nix-community/nixvim";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # pull in the parent repo as a plain source tree so we can `import` the
-    # shared `lib/` helpers without duplicating them in every sub-flake.
-    # `flake = false` means "don't evaluate as a flake, just expose the
-    # files" — avoids circular flake evaluation and an unnecessary lockfile
-    # input. the `path:../..` form works for both:
+    # shared `lib/` helpers and the IDE builder without duplicating either in
+    # every sub-flake. `flake = false` means "don't evaluate as a flake, just
+    # expose the files". this avoids circular flake evaluation and an unnecessary
+    # lockfile input. the `path:../..` form works for both:
     #   - local dev: `nix develop ./nix/flakes/typescript`
     #   - published: `github:rhizomatous/tendril?dir=nix/flakes/typescript`
     # (in the published case, the whole repo is copied to the nix store, so
@@ -34,6 +39,7 @@
     {
       self,
       nixpkgs,
+      nixvim,
       tendril-root,
     }:
     let
@@ -46,8 +52,9 @@
       # pulls specific attribute names from an attrset into local scope.
       inherit (tendrilLib) forAllSystems mkLanguageLib;
 
-      # wrap `./module.nix` with the public-api adapter; `langLib.mkShell`
-      # auto-composes the IDE module so the dev shell has an editor.
+      # the IDE-specific nvim builder. signature: pkgs -> configured nvim.
+      tendrilNvim = import "${tendril-root}/flakes/ide/build.nix" { inherit nixvim; };
+
       langLib = mkLanguageLib (import ./module.nix);
     in
     {
@@ -61,16 +68,16 @@
         # not deprecated.
         let
           pkgs = nixpkgs.legacyPackages.${system};
+          nvim = tendrilNvim pkgs;
         in
         {
-          default = langLib.mkShell { inherit pkgs; };
+          default = langLib.mkShell { inherit pkgs nvim; };
         }
       );
 
       # `lib` is a free-form, system-agnostic flake output. consumers reach
       # it as `tendril-typescript.lib.{module, mkShell}` and pass their own
-      # `pkgs`, so they don't have to commit to a `nixpkgs` revision they
-      # don't already have.
+      # `pkgs` and `nvim`.
       lib = langLib;
     };
 }

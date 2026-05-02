@@ -4,16 +4,30 @@
 # and reach everything via
 #   tendril.devShells.<sys>.<lang>          (e.g. ...typescript)
 #   tendril.lib.<lang>.{module, mkShell}    (e.g. tendril.lib.typescript.mkShell)
+#   tendril.lib.tendrilNvim                 (the nvim builder, for custom shells)
 #
-# also defines `devShells.<sys>.default`, the dev shell for working *on*
-# tendril itself (formatter, lsp, debugging tools), activated via .envrc.
+# also defines `devShells.<sys>.default`, the polyglot shell for working *on*
+# tendril itself, activated via .envrc.
 {
   description = "tendril: polyglot dev environment library";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
+    # nixvim — declarative neovim config framework. used by `flakes/ide/build.nix`
+    # to construct the editor that's composed into every language shell.
+    nixvim = {
+      url = "github:nix-community/nixvim";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
 
   outputs =
-    { self, nixpkgs }:
+    {
+      self,
+      nixpkgs,
+      nixvim,
+    }:
     let
       # shared helpers (see `./lib/default.nix`).
       tendrilLib = import ./lib { inherit nixpkgs; };
@@ -24,13 +38,15 @@
         mkLanguageLib
         ;
 
+      # the IDE-specific nvim builder — lives with the rest of the nvim stuff
+      # under `flakes/ide/`. signature: pkgs -> configured nvim derivation.
+      tendrilNvim = import ./flakes/ide/build.nix { inherit nixvim; };
+
       # registry of languages tendril knows about. adding a new language is a
       # one-line addition here, plus a `flakes/<lang>/module.nix`.
       #
-      # values are module *functions* (`{ pkgs } -> module`), not modules.
-      # we delay evaluation until we know which system's `pkgs` to use.
-      # the same module function gets called with `aarch64-darwin` pkgs in
-      # one branch, `x86_64-linux` pkgs in another, etc.
+      # values are module *functions* (`{ pkgs, nvim } -> module`), not modules.
+      # we delay evaluation until we know which system's `pkgs` (and nvim) to use.
       languages = {
         typescript = import ./flakes/typescript/module.nix;
         go = import ./flakes/go/module.nix;
@@ -47,31 +63,37 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
 
-          # `builtins.mapAttrs (name: value: ...) attrset` applies the function
-          # to each (name, value) pair. we ignore the name (`_`) and use the
-          # value (the module function) to build a shell.
+          # the configured nvim, built once per system and threaded through
+          # to every language module so we don't re-derive it per shell.
+          nvim = tendrilNvim pkgs;
+
           languageShells = builtins.mapAttrs (
             _: mkModule:
             mkShell {
               inherit pkgs;
-              module = mkModule { inherit pkgs; };
+              module = mkModule { inherit pkgs nvim; };
             }
           ) languages;
         in
         languageShells
         // {
           # the polyglot default. each language module already composes the IDE,
-          # so `mergeModules` de-dupes `packages` so neovim appears once.
+          # so `mergeModules` de-dupes `packages` so nvim appears once.
           default = mkShell {
             inherit pkgs;
-            module = mergeModules (map (mkModule: mkModule { inherit pkgs; }) (builtins.attrValues languages));
+            module = mergeModules (
+              map (mkModule: mkModule { inherit pkgs nvim; }) (builtins.attrValues languages)
+            );
           };
         }
       );
 
-      # `lib.<lang>.{module, mkShell}` for each language.
-      # consumers bring their own `pkgs`.
-      lib = builtins.mapAttrs (_: mkLanguageLib) languages;
+      # `lib.<lang>.{module, mkShell}` for each language, plus `lib.tendrilNvim`
+      # so consumers wiring up `lib.<lang>.mkShell { pkgs; nvim }` themselves
+      # have access to the configured nvim builder.
+      lib = (builtins.mapAttrs (_: mkLanguageLib) languages) // {
+        inherit tendrilNvim;
+      };
 
       # `nix fmt` reads this. exposed at the umbrella level so consumers
       # pinning tendril can format their nix with our chosen tool.

@@ -97,6 +97,9 @@ the root `flake.nix` re-exports:
 globally installed (in the flake):
 - `nodejs_24` — Node 24 LTS (Active LTS through Apr 2027, maintenance through Apr 2028). includes `npm` and `corepack`.
 
+also bundled:
+- `typescript-language-server` — auto-attached by tendril's nvim.
+
 not bundled (consumer's `package.json` owns these):
 - `typescript`, `eslint`, `prettier`, `vitest`, `ts-node`, etc.
 
@@ -104,9 +107,9 @@ not bundled (consumer's `package.json` owns these):
 
 globally installed:
 - `go_1_26` — Go 1.26.x compiler and `go` command.
-- `gopls` — language server (editors expect it on `PATH`).
-- `delve` — debugger (same reason).
-- `gotools` — `goimports`, etc. (editor integrations).
+- `gopls` — language server (auto-attached by tendril's nvim, also expected by other editors on `PATH`).
+- `delve` — debugger.
+- `gotools` — `goimports`, etc.
 
 not bundled:
 - `golangci-lint` — pinnable per-project via the `tool` directive in `go.mod` (Go 1.24+), or `tools.go`/`go run` for older projects.
@@ -125,10 +128,20 @@ consumers reach the nix tooling as `tendril.devShells.<sys>.nix`. tendril's own 
 
 ### IDE (`nix/flakes/ide/`)
 
-cross-cutting module — not a language. auto-composed into every language shell built via `mkLanguageLib`, so entering any tendril shell gives you an editor on PATH.
+cross-cutting module — not a language. composed into every language shell so entering any tendril shell gives you the configured nvim on PATH.
 
-globally installed:
-- `neovim` — bare for v1; growth path is configured nvim with lspconfig wired to our language-server packages, or wholesale nixvim.
+built via [nixvim](https://nix-community.github.io/nixvim/) — the declarative config lives at `nix/flakes/ide/nixvim.nix`. plugin set:
+
+- **snacks.nvim** (folke) — bundled QoL: dashboard, picker, notifier, indent guides, scope, statuscolumn, terminal.
+- **blink.cmp** — rust-backed completion.
+- **nvim-treesitter** — syntax highlighting and indent.
+- **lspconfig** with auto-attach for `gopls` (Go), `nil_ls` (Nix), `ts_ls` (TypeScript). servers only attach when their binary is on PATH — `gopls` won't fire in the typescript shell.
+- **lualine, gitsigns, nvim-autopairs, ts-autotag, bufferline, which-key, web-devicons** — standard kit.
+- **conform.nvim** — format-on-save (nixfmt / gofmt+goimports / prettier).
+- **mini.nvim** — surround, comment, ai textobjects.
+- **dracula** colorscheme.
+
+`nvim` is built once per system in `lib.tendrilNvim` (a function `pkgs -> nvim derivation`) and threaded through to language modules via the `{ pkgs, nvim }` argument shape.
 
 the IDE flake itself (`nix/flakes/ide/flake.nix`) exists for symmetry and as an escape hatch — consumers can pin it directly (`?dir=nix/flakes/ide`) to reach `lib.module` and compose the IDE into their own shells. rarely needed in practice.
 

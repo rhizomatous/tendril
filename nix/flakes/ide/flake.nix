@@ -3,10 +3,15 @@
 # consumers usually don't need to pin this directly. the IDE module is
 # auto-composed into every language shell built by tendril.
 {
-  description = "tendril ide: neovim module";
+  description = "tendril ide: nixvim-built neovim";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
+    nixvim = {
+      url = "github:nix-community/nixvim";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     tendril-root = {
       url = "path:../..";
@@ -18,11 +23,15 @@
     {
       self,
       nixpkgs,
+      nixvim,
       tendril-root,
     }:
     let
       tendrilLib = import "${tendril-root}/lib" { inherit nixpkgs; };
       inherit (tendrilLib) forAllSystems mkLanguageLib;
+
+      # local import — build.nix is a sibling.
+      tendrilNvim = import ./build.nix { inherit nixvim; };
 
       langLib = mkLanguageLib (import ./module.nix);
     in
@@ -31,9 +40,10 @@
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
+          nvim = tendrilNvim pkgs;
         in
         {
-          default = langLib.mkShell { inherit pkgs; };
+          default = langLib.mkShell { inherit pkgs nvim; };
         }
       );
 

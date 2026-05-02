@@ -1,9 +1,12 @@
-# turn a language's `module` *function* (`{ pkgs }: { packages, env, shellHook }`)
-# into the public-facing per-language lib that consumers reach as
-# `tendril.lib.<lang>`.
+# turn a language's `module` *function* (`{ pkgs, nvim } -> module`) into the
+# public-facing per-language lib that consumers reach as `tendril.lib.<lang>`.
 #
-# consumers use `lib.<lang>.mkShell { pkgs = ...; extraPackages = [...]; }`
-# to extend the base shell without re-deriving it from scratch.
+# `mkShell` requires a `nvim` derivation. tendril builds one via
+# `flakes/ide/build.nix`; consumers reach it as `tendril.lib.tendrilNvim pkgs`
+# or supply their own.
+#
+# consumers use `lib.<lang>.mkShell { pkgs = ...; nvim = ...; }` (plus
+# optional `extraPackages`/`extraEnv`/`extraShellHook`).
 
 { mkShell }:
 
@@ -12,6 +15,7 @@ mkModule: {
   mkShell =
     {
       pkgs,
+      nvim,
       extraPackages ? [ ],
       extraEnv ? { },
       extraShellHook ? "",
@@ -23,6 +27,6 @@ mkModule: {
         extraEnv
         extraShellHook
         ;
-      module = mkModule { inherit pkgs; };
+      module = mkModule { inherit pkgs nvim; };
     };
 }
