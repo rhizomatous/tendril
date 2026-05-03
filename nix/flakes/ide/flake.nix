@@ -1,7 +1,7 @@
 # standalone ide flake.
 #
 # consumers usually don't need to pin this directly. the IDE module is
-# auto-composed into every language shell built by tendril.
+# composed into every language shell built by tendril.
 {
   description = "tendril ide: nixvim-built neovim";
 
@@ -34,6 +34,11 @@
       tendrilNvim = import ./build.nix { inherit nixvim; };
 
       langLib = mkLanguageLib (import ./module.nix);
+
+      forLinuxSystems = nixpkgs.lib.genAttrs [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
     in
     {
       devShells = forAllSystems (
@@ -44,6 +49,20 @@
         in
         {
           default = langLib.mkShell { inherit pkgs nvim; };
+        }
+      );
+
+      packages = forLinuxSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          nvim = tendrilNvim pkgs;
+        in
+        {
+          default = langLib.mkDockerImage {
+            inherit pkgs nvim;
+            name = "tendril-ide";
+          };
         }
       );
 

@@ -10,6 +10,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # see `flakes/typescript/flake.nix` for an explanation of `path:../..`.
     tendril-root = {
       url = "path:../..";
       flake = false;
@@ -30,6 +31,11 @@
       tendrilNvim = import "${tendril-root}/flakes/ide/build.nix" { inherit nixvim; };
 
       langLib = mkLanguageLib (import ./module.nix);
+
+      forLinuxSystems = nixpkgs.lib.genAttrs [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
     in
     {
       devShells = forAllSystems (
@@ -40,6 +46,20 @@
         in
         {
           default = langLib.mkShell { inherit pkgs nvim; };
+        }
+      );
+
+      packages = forLinuxSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          nvim = tendrilNvim pkgs;
+        in
+        {
+          default = langLib.mkDockerImage {
+            inherit pkgs nvim;
+            name = "tendril-nix";
+          };
         }
       );
 

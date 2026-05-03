@@ -3,8 +3,10 @@
 #   inputs.tendril.url = "github:rhizomatous/tendril?dir=nix";
 # and reach everything via
 #   tendril.devShells.<sys>.<lang>          (e.g. ...typescript)
-#   tendril.lib.<lang>.{module, mkShell}    (e.g. tendril.lib.typescript.mkShell)
+#   tendril.lib.<lang>.{module, mkShell, mkDockerImage}
 #   tendril.lib.tendrilNvim                 (the nvim builder, for custom shells)
+#   tendril.lib.mkDockerImage               (generic docker builder)
+#   tendril.packages.<linux-sys>.<lang>     (pre-built docker images)
 #
 # also defines `devShells.<sys>.default`, the polyglot shell for working *on*
 # tendril itself, activated via .envrc.
@@ -35,12 +37,21 @@
         forAllSystems
         mkShell
         mergeModules
+        mkDockerImage
         mkLanguageLib
         ;
 
       # the IDE-specific nvim builder — lives with the rest of the nvim stuff
       # under `flakes/ide/`. signature: pkgs -> configured nvim derivation.
       tendrilNvim = import ./flakes/ide/build.nix { inherit nixvim; };
+
+      # docker images need linux pkgs (the contents end up running inside the
+      # container). darwin pkgs would build darwin binaries, broken images.
+      linuxSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+      forLinuxSystems = nixpkgs.lib.genAttrs linuxSystems;
 
       # registry of languages tendril knows about. adding a new language is a
       # one-line addition here, plus a `flakes/<lang>/module.nix`.
@@ -88,11 +99,41 @@
         }
       );
 
-      # `lib.<lang>.{module, mkShell}` for each language, plus `lib.tendrilNvim`
-      # so consumers wiring up `lib.<lang>.mkShell { pkgs; nvim }` themselves
-      # have access to the configured nvim builder.
+      # docker images parallel to the dev shells: per-language plus a polyglot
+      # `default`. linux only — see `linuxSystems` above for why.
+      packages = forLinuxSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          nvim = tendrilNvim pkgs;
+
+          languageImages = builtins.mapAttrs (
+            name: mkModule:
+            mkDockerImage {
+              inherit pkgs;
+              name = "tendril-${name}";
+              module = mkModule { inherit pkgs nvim; };
+            }
+          ) languages;
+        in
+        languageImages
+        // {
+          default = mkDockerImage {
+            inherit pkgs;
+            name = "tendril";
+            module = mergeModules (
+              map (mkModule: mkModule { inherit pkgs nvim; }) (builtins.attrValues languages)
+            );
+          };
+        }
+      );
+
+      # `lib.<lang>.{module, mkShell, mkDockerImage}` for each language, plus
+      # `lib.tendrilNvim` (configured nvim builder) and `lib.mkDockerImage`
+      # (generic docker builder for arbitrary modules) for consumers wiring
+      # things up themselves.
       lib = (builtins.mapAttrs (_: mkLanguageLib) languages) // {
-        inherit tendrilNvim;
+        inherit tendrilNvim mkDockerImage;
       };
 
       # `nix fmt` reads this. exposed at the umbrella level so consumers

@@ -1,17 +1,19 @@
 # turn a language's `module` *function* (`{ pkgs, nvim } -> module`) into the
 # public-facing per-language lib that consumers reach as `tendril.lib.<lang>`.
 #
-# `mkShell` requires a `nvim` derivation. tendril builds one via
-# `flakes/ide/build.nix`; consumers reach it as `tendril.lib.tendrilNvim pkgs`
-# or supply their own.
+# both `mkShell` and `mkDockerImage` require a `nvim` derivation. tendril
+# builds one via `flakes/ide/build.nix`; consumers reach it as
+# `tendril.lib.tendrilNvim pkgs` or supply their own.
 #
-# consumers use `lib.<lang>.mkShell { pkgs = ...; nvim = ...; }` (plus
-# optional `extraPackages`/`extraEnv`/`extraShellHook`).
+# consumers use:
+#   lib.<lang>.mkShell { pkgs; nvim; ... }       -> dev shell
+#   lib.<lang>.mkDockerImage { pkgs; nvim; name } -> docker image (linux pkgs)
 
-{ mkShell }:
+{ mkShell, mkDockerImage }:
 
 mkModule: {
   module = mkModule;
+
   mkShell =
     {
       pkgs,
@@ -27,6 +29,18 @@ mkModule: {
         extraEnv
         extraShellHook
         ;
+      module = mkModule { inherit pkgs nvim; };
+    };
+
+  mkDockerImage =
+    {
+      pkgs,
+      nvim,
+      name,
+      tag ? "latest",
+    }:
+    mkDockerImage {
+      inherit pkgs name tag;
       module = mkModule { inherit pkgs nvim; };
     };
 }

@@ -14,9 +14,13 @@ rec {
   # the `module -> devShell` builder.
   mkShell = import ./mkShell.nix;
 
+  # the `module -> docker image` builder; see ./mkDockerImage.nix.
+  mkDockerImage = import ./mkDockerImage.nix;
+
   # combine N modules into one (for polyglot shells); see ./mergeModules.nix.
   mergeModules = import ./mergeModules.nix { lib = nixpkgs.lib; };
 
-  # the `module -> { module, mkShell }` public-api adapter; see ./mkLanguageLib.nix.
-  mkLanguageLib = import ./mkLanguageLib.nix { inherit mkShell; };
+  # the `module -> { module, mkShell, mkDockerImage }` public-api adapter;
+  # see ./mkLanguageLib.nix.
+  mkLanguageLib = import ./mkLanguageLib.nix { inherit mkShell mkDockerImage; };
 }

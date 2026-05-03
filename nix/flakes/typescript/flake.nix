@@ -1,15 +1,14 @@
 # standalone typescript flake. directly consumable via:
 #   nix develop github:rhizomatous/tendril?dir=nix/flakes/typescript
+#   nix build   github:rhizomatous/tendril?dir=nix/flakes/typescript#packages.x86_64-linux.default
 #
 # also re-exported by the umbrella `flake.nix` at `nix/flake.nix`, so consumers
 # pinning `github:rhizomatous/tendril?dir=nix` can reach this as
-# `tendril.devShells.<sys>.typescript` and `tendril.lib.typescript`.
+# `tendril.devShells.<sys>.typescript`, `tendril.lib.typescript`, and
+# `tendril.packages.<linux-sys>.typescript`.
 {
   description = "tendril typescript: node 24 dev shell";
 
-  # flakes declare their dependencies up front so they're hermetic and
-  # reproducible. each input gets pinned to a specific revision in `flake.lock`
-  # the first time the flake is evaluated.
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -33,8 +32,6 @@
     };
   };
 
-  # `outputs` is a function from resolved inputs to the flake's output
-  # attrset. `self` is a self-reference to this flake.
   outputs =
     {
       self,
@@ -43,29 +40,23 @@
       tendril-root,
     }:
     let
-      # `tendril-root` is a path in the nix store; interpolating it as a
-      # string (`"${tendril-root}/lib"`) gives the absolute path that the
-      # `import` builtin needs.
       tendrilLib = import "${tendril-root}/lib" { inherit nixpkgs; };
-
-      # `inherit (set) a b c` is sugar for `a = set.a; b = set.b; c = set.c;` —
-      # pulls specific attribute names from an attrset into local scope.
       inherit (tendrilLib) forAllSystems mkLanguageLib;
 
       # the IDE-specific nvim builder. signature: pkgs -> configured nvim.
       tendrilNvim = import "${tendril-root}/flakes/ide/build.nix" { inherit nixvim; };
 
       langLib = mkLanguageLib (import ./module.nix);
+
+      # docker images need linux pkgs; see umbrella for the longer note.
+      forLinuxSystems = nixpkgs.lib.genAttrs [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
     in
     {
-      # `devShells.<system>.<name>` is the canonical flake output for shells
-      # entered via `nix develop`. `default` is the implicit choice when no
-      # name is passed to `nix develop`.
       devShells = forAllSystems (
         system:
-        # `legacyPackages` is nixpkgs' convention for "the entire package set
-        # as an attrset, indexed by system". the name is historical — it is
-        # not deprecated.
         let
           pkgs = nixpkgs.legacyPackages.${system};
           nvim = tendrilNvim pkgs;
@@ -75,9 +66,20 @@
         }
       );
 
-      # `lib` is a free-form, system-agnostic flake output. consumers reach
-      # it as `tendril-typescript.lib.{module, mkShell}` and pass their own
-      # `pkgs` and `nvim`.
+      packages = forLinuxSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          nvim = tendrilNvim pkgs;
+        in
+        {
+          default = langLib.mkDockerImage {
+            inherit pkgs nvim;
+            name = "tendril-typescript";
+          };
+        }
+      );
+
       lib = langLib;
     };
 }

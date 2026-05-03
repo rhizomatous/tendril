@@ -214,10 +214,10 @@ use flake github:rhizomatous/tendril?dir=nix/flakes/typescript
 2. ~~decide on formatter~~ — settled: `nixfmt` (RFC 166 standard); also exposed as `formatter.<sys>` so `nix fmt` works for consumers.
 3. ~~optional: GitHub Actions running `nix flake check` on each push.~~ — done (`.github/workflows/ci.yml`, matrix over ubuntu/macos).
 
-**Phase 4+ — build targets (deferred, but designed for)**
-- `nix/lib/mkDockerImage.nix` using `pkgs.dockerTools.buildLayeredImage`.
-- `nix/lib/mkNixosModule.nix`.
-- `nix/lib/mkVMImage.nix` via `nixos-generators`.
+**Phase 4 — build targets**
+- ~~`nix/lib/mkDockerImage.nix` using `pkgs.dockerTools.buildLayeredImage`~~ — done. `mkLanguageLib` exposes `mkDockerImage` alongside `mkShell`. umbrella + sub-flakes expose pre-built images at `packages.<linux-sys>.<lang>` (`x86_64-linux`/`aarch64-linux` only — darwin pkgs would build broken images). macos local builds need a linux builder (Determinate Nix's native one, `nix-darwin`'s `linux-builder`, or a remote builder).
+- `nix/lib/mkNixosModule.nix` — deferred.
+- `nix/lib/mkVMImage.nix` via `nixos-generators` — deferred.
 - each is a new function over the existing module attrset; no language flake needs to change.
 
 ## open decisions (pick later)
