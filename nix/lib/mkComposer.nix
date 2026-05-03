@@ -12,8 +12,11 @@
 #   composer.withIde langModule        # [ langModule ide ]
 #   composer.withoutIde langModule     # [ langModule ]
 
-{ ideModule }:
+{ nixvim }:
 
+let
+  ideModule = import ../modules/ide/module.nix { inherit nixvim; };
+in
 pkgs:
 let
   ide = ideModule pkgs;

@@ -1,12 +1,11 @@
 # tendril's internal helper library.
 #
-# takes `nixvim` so it can pre-build the configured nvim derivation and wire
-# the ide module into `mkLanguageLib`. consumers of `lib.<lang>.mkShell`
-# don't have to know about ide pieces.
+# takes `nixvim` so it can wire the ide module into `mkComposer`.
+# consumers of `lib.<lang>.mkShell` don't have to know about ide pieces.
 
 { nixpkgs, nixvim }:
-# `rec` lets sibling attributes reference each other.
-rec {
+
+let
   # the environment helper.
   forAllSystems = import ./forAllSystems.nix { inherit nixpkgs; };
 
@@ -19,16 +18,12 @@ rec {
   # the `modules -> docker image` builder; see ./mkDockerImage.nix.
   mkDockerImage = import ./mkDockerImage.nix { inherit mergeModules; };
 
-  # `pkgs -> module` for the configured ide (nvim + git). consumed by
-  # `mkComposer`; not exposed in the public flake `lib`.
-  ideModule = import ../modules/ide/module.nix { inherit nixvim; };
-
   # `pkgs -> { ide, withIde, withoutIde }`. the single source of truth for
   # language+ide composition; consumed by both the flake outputs and
-  # `mkLanguageLib`. see ./mkComposer.nix.
-  mkComposer = import ./mkComposer.nix { inherit ideModule; };
+  # `mkLanguageLib`.
+  mkComposer = import ./mkComposer.nix { inherit nixvim; };
 
-  # the `mkModule -> { module, mkShell, mkDockerImage }` public-api adapter;
+  # the `mkModule -> { mkShell, mkDockerImage }` public-api adapter;
   # see ./mkLanguageLib.nix.
   mkLanguageLib = import ./mkLanguageLib.nix {
     inherit
@@ -37,4 +32,13 @@ rec {
       mkComposer
       ;
   };
+in
+{
+  inherit
+    forAllSystems
+    mkShell
+    mkDockerImage
+    mkComposer
+    mkLanguageLib
+    ;
 }
