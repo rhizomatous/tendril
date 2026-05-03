@@ -6,6 +6,8 @@
 #
 # composition is delegated to `mkComposer`, the same helper the flake uses
 # for its own outputs, so per-language and consumer-side shells stay in sync.
+# also stamps `TENDRIL_ENV` onto every output (`<lang>` or `<lang>-bare`)
+# so consumers can tell programmatically which tendril env they're in.
 #
 # consumers use:
 #   lib.<lang>.mkShell { pkgs; ... }              -> dev shell with ide
@@ -18,17 +20,21 @@
   mkComposer,
 }:
 
-mkModule:
+langName: mkModule:
 let
   # build the module list passed to a builder. always includes the language
-  # module; conditionally includes the ide module.
+  # module; conditionally includes the ide module. tags the env with the
+  # name of the tendril env this shell/image represents.
   modulesFor =
     pkgs: withIde:
     let
       composer = mkComposer pkgs;
       langModule = mkModule { inherit pkgs; };
+      base =
+        if withIde then composer.withIde langModule else composer.withoutIde langModule;
+      tendrilEnv = if withIde then langName else "${langName}-bare";
     in
-    if withIde then composer.withIde langModule else composer.withoutIde langModule;
+    base ++ [ { env.TENDRIL_ENV = tendrilEnv; } ];
 in
 {
   mkShell =

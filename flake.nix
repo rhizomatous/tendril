@@ -93,6 +93,10 @@
       # produce the per-language outputs keyed by system. `build` is called
       # as `build { pkgs, name, modules }` for each entry; callers ignore
       # `name` (devShells) or use it for naming (packages).
+      #
+      # tags every output with `TENDRIL_ENV=<name>` so a consumer can tell
+      # programmatically (e.g. from a shell prompt or script) which tendril
+      # env they're sitting in.
       mkPerLanguageOutputs =
         {
           genAttrsForSystems,
@@ -104,7 +108,13 @@
             pkgs = nixpkgs.legacyPackages.${system};
             mods = modulesFor pkgs;
           in
-          builtins.mapAttrs (name: modules: build { inherit pkgs name modules; }) mods
+          builtins.mapAttrs (
+            name: modules:
+            build {
+              inherit pkgs name;
+              modules = modules ++ [ { env.TENDRIL_ENV = name; } ];
+            }
+          ) mods
         );
     in
     {
@@ -147,7 +157,7 @@
       # pre-built `devShells` / `packages` outputs above. exists so consumers
       # can pass `extraPackages` / `extraEnv` / `extraShellHook` (the flake
       # outputs are concrete derivations and can't accept those).
-      lib = builtins.mapAttrs (_: mkLanguageLib) languages;
+      lib = builtins.mapAttrs mkLanguageLib languages;
 
       # `nix fmt` reads this. exposed at the umbrella level so consumers
       # pinning tendril can format their nix with our chosen tool.
