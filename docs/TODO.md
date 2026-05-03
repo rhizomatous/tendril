@@ -3,3 +3,4 @@
 - [ ] build a setup/launcher util. set up Nix and any other prereqs? provide scaffold commands for projects? install script?
 - [ ] git hooks
 - [ ] each env should set an env var so it's easy to programmatically tell which you're in
+- [ ] core tools - bashInteractive? coreutils? batcact, rg, etc.? move git in there?

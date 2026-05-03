@@ -1,23 +1,48 @@
-# turn a language's `module` *function* (`{ pkgs, nvim } -> module`) into the
+# turn a language's `module` *function* (`{ pkgs } -> module`) into the
 # public-facing per-language lib that consumers reach as `tendril.lib.<lang>`.
 #
-# both `mkShell` and `mkDockerImage` require a `nvim` derivation. tendril
-# builds one via `flakes/ide/build.nix`; consumers reach it as
-# `tendril.lib.tendrilNvim pkgs` or supply their own.
+# the consumer-facing `mkShell` / `mkDockerImage` auto-include the tendril
+# ide module (configured nvim + git). pass `withIde = false` to opt out.
 #
 # consumers use:
-#   lib.<lang>.mkShell { pkgs; nvim; ... }       -> dev shell
-#   lib.<lang>.mkDockerImage { pkgs; nvim; name } -> docker image (linux pkgs)
+#   lib.<lang>.mkShell { pkgs; ... }              -> dev shell with ide
+#   lib.<lang>.mkShell { pkgs; withIde = false; } -> language only
+#   lib.<lang>.mkDockerImage { pkgs; name; }      -> docker image with ide
+#   lib.<lang>.module                             -> raw `{ pkgs } -> module`
 
-{ mkShell, mkDockerImage }:
+{
+  mkShell,
+  mkDockerImage,
+  ideModule,
+  tendrilNvim,
+}:
 
-mkModule: {
+mkModule:
+let
+  # build the module list passed to a builder. always includes the language
+  # module; conditionally includes the ide module + nvim derivation.
+  modulesFor =
+    pkgs: withIde:
+    [ (mkModule { inherit pkgs; }) ]
+    ++ (
+      if withIde then
+        [
+          (ideModule {
+            inherit pkgs;
+            nvim = tendrilNvim pkgs;
+          })
+        ]
+      else
+        [ ]
+    );
+in
+{
   module = mkModule;
 
   mkShell =
     {
       pkgs,
-      nvim,
+      withIde ? true,
       extraPackages ? [ ],
       extraEnv ? { },
       extraShellHook ? "",
@@ -29,18 +54,18 @@ mkModule: {
         extraEnv
         extraShellHook
         ;
-      module = mkModule { inherit pkgs nvim; };
+      modules = modulesFor pkgs withIde;
     };
 
   mkDockerImage =
     {
       pkgs,
-      nvim,
       name,
       tag ? "latest",
+      withIde ? true,
     }:
     mkDockerImage {
       inherit pkgs name tag;
-      module = mkModule { inherit pkgs nvim; };
+      modules = modulesFor pkgs withIde;
     };
 }

@@ -1,6 +1,6 @@
-# build a docker image from a `module` attrset.
+# build a docker image from a list of `module` attrsets.
 #
-# this is the docker-targeted parallel of `mkShell` — same module shape
+# this is the docker-targeted parallel of `mkShell`: same module shape
 # (`{ packages, env, shellHook }`), different output. `shellHook` doesn't
 # really translate to a docker image (no shell entry hook concept), so it's
 # ignored here; consumers wanting startup commands can pass `entrypoint`.
@@ -10,27 +10,31 @@
 # linux container the image describes. the umbrella's `packages.<sys>`
 # output restricts itself to linux systems for this reason.
 #
-# adds `bashInteractive` + `coreutils` to contents so `docker run -it` lands
+# adds `bashInteractive` & `coreutils` to contents so `docker run -it` lands
 # in a usable shell. `PATH` is built from every package's `bin/` dir.
+
+{ mergeModules }:
 
 {
   pkgs,
   name,
   tag ? "latest",
-  module,
+  modules ? [ ],
   cmd ? null,
   workingDir ? "/workspace",
   entrypoint ? null,
 }:
 let
+  merged = mergeModules modules;
+
   shellPackages = with pkgs; [
     bashInteractive
     coreutils
   ];
-  allPackages = (module.packages or [ ]) ++ shellPackages;
+  allPackages = merged.packages ++ shellPackages;
 
   pathString = pkgs.lib.makeBinPath allPackages;
-  envList = (pkgs.lib.mapAttrsToList (k: v: "${k}=${v}") (module.env or { })) ++ [
+  envList = (pkgs.lib.mapAttrsToList (k: v: "${k}=${v}") merged.env) ++ [
     "PATH=${pathString}"
   ];
 in

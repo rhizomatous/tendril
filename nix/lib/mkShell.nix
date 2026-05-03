@@ -1,4 +1,5 @@
-# build a dev shell from a `module` attrset (plus optional consumer extras).
+# build a dev shell from a list of `module` attrsets (plus optional consumer
+# extras).
 #
 # `pkgs.mkShell` is nixpkgs' helper for declaring a development environment
 # (the thing you enter via `nix develop`). it accepts:
@@ -6,25 +7,32 @@
 #   - `shellHook`: bash run on shell entry
 #   - any other attribute name: exported as an env var inside the shell
 #
-# our `module` is the reusable per-language unit, shape:
+# a `module` is the unit of reuse, shape:
 #   { packages = [...]; env = { FOO = "bar"; }; shellHook = "..."; }
-# we splat it into mkShell's call, then layer on the consumer's extras.
+# we accept a list and merge them via `mergeModules`, then layer on consumer
+# extras. taking a list lets the caller compose ide & language & whatever
+# without re-deriving the merge logic.
+
+{ mergeModules }:
 
 {
   pkgs,
-  module,
+  modules ? [ ],
   extraPackages ? [ ], # additional packages to add to the shell
   extraEnv ? { }, # additional env vars (override module env on collision)
-  extraShellHook ? "", # bash appended after the module's shellHook
+  extraShellHook ? "", # bash appended after the modules' shellHooks
 }:
 
+let
+  merged = mergeModules modules;
+in
 pkgs.mkShell (
   {
-    packages = (module.packages or [ ]) ++ extraPackages;
-    shellHook = (module.shellHook or "") + extraShellHook;
+    packages = merged.packages ++ extraPackages;
+    shellHook = merged.shellHook + extraShellHook;
   }
   # `//` is nix's attrset-merge operator (right-hand wins on duplicate keys).
   # module env vars first, then consumer overrides.
-  // (module.env or { })
+  // merged.env
   // extraEnv
 )

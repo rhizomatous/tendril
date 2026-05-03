@@ -21,7 +21,7 @@ steps:
 2. email `support@determinate.systems` with your FlakeHub username, requesting `native-linux-builder` access. they're rolling it out gradually.
 3. once approved: `determinate-nixd auth login`.
 4. verify with `determinate-nixd version` — should list `native-linux-builder` under "features enabled".
-5. `nix build ./nix#packages.x86_64-linux.typescript --no-link` should now succeed.
+5. `nix build .#packages.x86_64-linux.typescript --no-link` should now succeed.
 
 ## option 2: external linux VM as a remote builder (works today)
 

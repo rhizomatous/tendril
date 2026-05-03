@@ -1,6 +1,6 @@
 # tendril
 
-a polyglot dev environment, distributed as Nix flakes.
+a polyglot dev environment, distributed as a Nix flake.
 
 pin tendril, get a batteries-included dev shell: toolchain, language server, debugger, and editor integrations.
 
@@ -20,18 +20,18 @@ see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
 
 ```nix
 {
-  inputs.tendril-go.url = "github:rhizomatous/tendril?dir=nix/flakes/go";
-  outputs = { self, nixpkgs, tendril-go, ... }: {
-    devShells.aarch64-darwin.default = tendril-go.devShells.aarch64-darwin.default;
+  inputs.tendril.url = "github:rhizomatous/tendril";
+  outputs = { self, nixpkgs, tendril, ... }: {
+    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.go;
   };
 }
 ```
 
-### pin umbrella, extend a shell
+### extend a shell
 
 ```nix
 {
-  inputs.tendril.url = "github:rhizomatous/tendril?dir=nix";
+  inputs.tendril.url = "github:rhizomatous/tendril";
   outputs = { self, nixpkgs, tendril, ... }: let
     pkgs = import nixpkgs { system = "aarch64-darwin"; };
   in {
@@ -43,13 +43,13 @@ see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
 }
 ```
 
-`mkShell` accepts `extraPackages`, `extraEnv`, and `extraShellHook` for layering on top of the base shell.
+`mkShell` accepts `extraPackages`, `extraEnv`, and `extraShellHook` for layering on top of the base shell. pass `withIde = false` to drop the bundled nvim + git.
 
 ### one shell with everything
 
 ```nix
 {
-  inputs.tendril.url = "github:rhizomatous/tendril?dir=nix";
+  inputs.tendril.url = "github:rhizomatous/tendril";
   outputs = { self, nixpkgs, tendril, ... }: {
     devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.default;
   };
@@ -60,7 +60,7 @@ see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
 
 ```bash
 # .envrc in the consumer repo
-use flake github:rhizomatous/tendril?dir=nix/flakes/typescript
+use flake github:rhizomatous/tendril#typescript
 ```
 
 ## platforms
@@ -72,6 +72,6 @@ use flake github:rhizomatous/tendril?dir=nix/flakes/typescript
 ```bash
 direnv allow                          # auto-activates dev shell on cd
 nixfmt path/to/file.nix               # format (nixfmt on PATH via dev shell)
-nix flake check ./nix                 # evaluate all outputs
-nix develop ./nix/flakes/<lang>       # standalone per-language shell
+nix flake check                       # evaluate all outputs
+nix develop .#go                      # standalone per-language shell
 ```

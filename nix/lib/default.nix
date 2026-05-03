@@ -1,26 +1,41 @@
 # tendril's internal helper library.
 #
-# imported by the umbrella `flake.nix` and by each `flakes/<lang>/flake.nix`
-# (the latter via a `path:../..` flake input). single source of truth for the
-# helpers that turn a per-language `module` into per-system flake outputs.
-#
-# `rec` lets sibling attributes reference each other.
+# takes `nixvim` so it can pre-build the configured nvim derivation and wire
+# the ide module into `mkLanguageLib`. consumers of `lib.<lang>.mkShell`
+# don't have to know about ide pieces.
 
-{ nixpkgs }:
+{ nixpkgs, nixvim }:
+# `rec` lets sibling attributes reference each other.
 rec {
-  # the environment helper
+  # the environment helper.
   forAllSystems = import ./forAllSystems.nix { inherit nixpkgs; };
 
-  # the `module -> devShell` builder.
-  mkShell = import ./mkShell.nix;
-
-  # the `module -> docker image` builder; see ./mkDockerImage.nix.
-  mkDockerImage = import ./mkDockerImage.nix;
-
-  # combine N modules into one (for polyglot shells); see ./mergeModules.nix.
+  # combine N modules into one.
   mergeModules = import ./mergeModules.nix { lib = nixpkgs.lib; };
 
-  # the `module -> { module, mkShell, mkDockerImage }` public-api adapter;
+  # the `modules -> devShell` builder.
+  mkShell = import ./mkShell.nix { inherit mergeModules; };
+
+  # the `modules -> docker image` builder; see ./mkDockerImage.nix.
+  mkDockerImage = import ./mkDockerImage.nix { inherit mergeModules; };
+
+  # the ide module (configured nvim + git). exposed so consumers composing
+  # shells from raw modules can include it themselves; auto-included by
+  # `mkLanguageLib`'s `mkShell` / `mkDockerImage`.
+  ideModule = import ../modules/ide/module.nix;
+
+  # `pkgs -> configured nvim derivation`. used by `mkLanguageLib` to build
+  # nvim per-system without the consumer having to thread it through.
+  tendrilNvim = import ../modules/ide/build.nix { inherit nixvim; };
+
+  # the `mkModule -> { module, mkShell, mkDockerImage }` public-api adapter;
   # see ./mkLanguageLib.nix.
-  mkLanguageLib = import ./mkLanguageLib.nix { inherit mkShell mkDockerImage; };
+  mkLanguageLib = import ./mkLanguageLib.nix {
+    inherit
+      mkShell
+      mkDockerImage
+      ideModule
+      tendrilNvim
+      ;
+  };
 }
