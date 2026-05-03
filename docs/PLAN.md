@@ -34,8 +34,7 @@ tendril/
     │   ├── go/module.nix
     │   ├── nix/module.nix
     │   └── ide/
-    │       ├── module.nix       # neovim + git, composed into every shell at the builder layer
-    │       ├── build.nix        # `pkgs -> configured nvim derivation`
+    │       ├── module.nix       # `{ nixvim } -> pkgs -> module` for nvim + git, composed into every shell at the builder layer
     │       └── nixvim.nix       # the declarative nvim config
     └── lib/
         ├── default.nix          # composition root: wires nixpkgs + nixvim into the helpers
@@ -43,7 +42,8 @@ tendril/
         ├── mkShell.nix          # modules list → devShell
         ├── mergeModules.nix     # combine N modules into one
         ├── mkDockerImage.nix    # modules list → docker image (linux only)
-        └── mkLanguageLib.nix    # mkModule → { module, mkShell, mkDockerImage } public-api adapter
+        ├── mkComposer.nix       # pkgs → { ide, withIde, withoutIde }; sole source of language+ide composition
+        └── mkLanguageLib.nix    # mkModule → { mkShell, mkDockerImage } public-api adapter
 ```
 
 rationale: one flake means one lockfile, one place to bump pins, no drift between "the standalone go flake" and "the umbrella's go shell." the per-language directories under `modules/` hold pure language modules; ide composition happens at the builder layer (`mkLanguageLib`), not inside each module.
@@ -78,8 +78,7 @@ the sole flake at `flake.nix` exposes:
 - `devShells.<sys>.<lang>` — per-language shells, each with the ide module composed in
 - `devShells.<sys>.default` — polyglot shell with every language + ide
 - `packages.<linux-sys>.<lang>` and `packages.<linux-sys>.default` — docker images, parallel to the shells (linux only — darwin pkgs would build broken images)
-- `lib.<lang>.{module, mkShell, mkDockerImage}` — per-language consumer api. `mkShell`/`mkDockerImage` auto-include the ide module; pass `withIde = false` to opt out
-- `lib.{tendrilNvim, ideModule, mkShell, mkDockerImage}` — building blocks for consumers composing custom shells from raw modules
+- `lib.<lang>.{mkShell, mkDockerImage}` — function-form of the per-language outputs, accepting `extraPackages` / `extraEnv` / `extraShellHook` for project-specific layering. both auto-include the ide module; pass `withIde = false` to opt out
 - `formatter.<sys>` — `nixfmt`, so `nix fmt` works for consumers
 
 ## per-language specifics

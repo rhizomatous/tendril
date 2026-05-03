@@ -19,14 +19,14 @@ rec {
   # the `modules -> docker image` builder; see ./mkDockerImage.nix.
   mkDockerImage = import ./mkDockerImage.nix { inherit mergeModules; };
 
-  # the ide module (configured nvim + git). exposed so consumers composing
-  # shells from raw modules can include it themselves; auto-included by
-  # `mkLanguageLib`'s `mkShell` / `mkDockerImage`.
-  ideModule = import ../modules/ide/module.nix;
+  # `pkgs -> module` for the configured ide (nvim + git). consumed by
+  # `mkComposer`; not exposed in the public flake `lib`.
+  ideModule = import ../modules/ide/module.nix { inherit nixvim; };
 
-  # `pkgs -> configured nvim derivation`. used by `mkLanguageLib` to build
-  # nvim per-system without the consumer having to thread it through.
-  tendrilNvim = import ../modules/ide/build.nix { inherit nixvim; };
+  # `pkgs -> { ide, withIde, withoutIde }`. the single source of truth for
+  # language+ide composition; consumed by both the flake outputs and
+  # `mkLanguageLib`. see ./mkComposer.nix.
+  mkComposer = import ./mkComposer.nix { inherit ideModule; };
 
   # the `mkModule -> { module, mkShell, mkDockerImage }` public-api adapter;
   # see ./mkLanguageLib.nix.
@@ -34,8 +34,7 @@ rec {
     inherit
       mkShell
       mkDockerImage
-      ideModule
-      tendrilNvim
+      mkComposer
       ;
   };
 }

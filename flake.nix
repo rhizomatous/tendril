@@ -4,13 +4,11 @@
 # consumers pin a single input:
 #   inputs.tendril.url = "github:rhizomatous/tendril";
 # and reach everything via:
-#   tendril.devShells.<sys>.<lang>           (e.g. ...typescript)
-#   tendril.devShells.<sys>.default          (polyglot — every registered lang)
-#   tendril.lib.<lang>.{module, mkShell, mkDockerImage}
-#   tendril.lib.tendrilNvim                  (the nvim builder, for custom shells)
-#   tendril.lib.ideModule                    (raw ide module for manual composition)
-#   tendril.lib.{mkShell, mkDockerImage}     (generic builders over modules lists)
-#   tendril.packages.<linux-sys>.<lang>      (pre-built docker images)
+#   tendril.devShells.<sys>.<lang>              (e.g. ...typescript)
+#   tendril.devShells.<sys>.default             (polyglot w/ every registered lang)
+#   tendril.packages.<linux-sys>.<lang>         (pre-built docker images)
+#   tendril.lib.<lang>.{mkShell, mkDockerImage} (extras-accepting variants of
+#                                                the pre-built shells/images)
 #
 # also activated by the repo's own `.envrc` for working on tendril itself.
 {
@@ -38,11 +36,10 @@
       tendrilLib = import ./nix/lib { inherit nixpkgs nixvim; };
       inherit (tendrilLib)
         forAllSystems
-        ideModule
-        mkShell
+        mkComposer
         mkDockerImage
         mkLanguageLib
-        tendrilNvim
+        mkShell
         ;
 
       # docker images need linux pkgs (the contents end up running inside the
@@ -64,92 +61,81 @@
         typescript = import ./nix/modules/typescript/module.nix;
       };
 
-      # per-system: build the modules list (every language + ide) once. the
-      # configured nvim is built once here too, then shared across all
-      # builders so we don't re-derive it per shell or per image.
+      # per-system, evaluate every language module and resolve the ide once
+      # (via `mkComposer`, which also builds nvim). returns the per-language
+      # modules list (with ide composed in) for builder consumption, plus an
+      # `all` list for the polyglot default.
       modulesFor =
         pkgs:
         let
-          nvim = tendrilNvim pkgs;
+          composer = mkComposer pkgs;
           languageModules = builtins.mapAttrs (_: mkModule: mkModule { inherit pkgs; }) languages;
-          ide = ideModule { inherit pkgs nvim; };
         in
         {
-          inherit languageModules ide;
-          # all languages + ide, ready to splat into a polyglot builder.
-          all = (builtins.attrValues languageModules) ++ [ ide ];
+          inherit languageModules;
+          inherit (composer) ide;
+          perLanguage = builtins.mapAttrs (_: composer.withIde) languageModules;
+          all = (builtins.attrValues languageModules) ++ [ composer.ide ];
         };
+
+      # produce the per-language attrs (one entry per language) plus a
+      # polyglot `default`, keyed by system. `build` is called as
+      # `build { pkgs, name, modules }` for each entry; callers ignore `name`
+      # (devShells) or use it to pick an image name (packages).
+      mkPerLanguageOutputs =
+        {
+          genAttrsForSystems,
+          build,
+        }:
+        genAttrsForSystems (
+          system:
+          let
+            pkgs = nixpkgs.legacyPackages.${system};
+            mods = modulesFor pkgs;
+            buildOne = name: modules: build { inherit pkgs name modules; };
+          in
+          builtins.mapAttrs buildOne mods.perLanguage
+          // {
+            default = buildOne "default" mods.all;
+          }
+        );
     in
     {
-      # for each supported system, expose:
-      #   - one named shell per language (e.g. `devShells.<sys>.typescript`)
-      #   - `default`, the polyglot shell merging every registered language
-      #     (what `.envrc` activates and `nix develop` picks by default)
-      devShells = forAllSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          mods = modulesFor pkgs;
-        in
-        builtins.mapAttrs (
-          _: langModule:
-          mkShell {
-            inherit pkgs;
-            modules = [
-              langModule
-              mods.ide
-            ];
-          }
-        ) mods.languageModules
-        // {
-          default = mkShell {
-            inherit pkgs;
-            modules = mods.all;
-          };
-        }
-      );
-
-      # docker images parallel to the dev shells: per-language plus a polyglot
-      # `default`. linux only, see `linuxSystems` above for why.
-      packages = forLinuxSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          mods = modulesFor pkgs;
-        in
-        builtins.mapAttrs (
-          name: langModule:
-          mkDockerImage {
-            inherit pkgs;
-            name = "tendril-${name}";
-            modules = [
-              langModule
-              mods.ide
-            ];
-          }
-        ) mods.languageModules
-        // {
-          default = mkDockerImage {
-            inherit pkgs;
-            name = "tendril";
-            modules = mods.all;
-          };
-        }
-      );
-
-      # `lib.<lang>.{module, mkShell, mkDockerImage}` for each language, plus
-      # the building blocks consumers may want for custom composition:
-      #   - `tendrilNvim`: pkgs -> configured nvim derivation
-      #   - `ideModule`:   raw ide module function
-      #   - `mkShell` / `mkDockerImage`: generic builders over modules lists
-      lib = (builtins.mapAttrs (_: mkLanguageLib) languages) // {
-        inherit
-          tendrilNvim
-          ideModule
-          mkShell
-          mkDockerImage
-          ;
+      # for each supported system, one named shell per language plus a
+      # polyglot `default`.
+      devShells = mkPerLanguageOutputs {
+        genAttrsForSystems = forAllSystems;
+        build =
+          {
+            pkgs,
+            modules,
+            ...
+          }:
+          mkShell { inherit pkgs modules; };
       };
+
+      # docker images parallel to the dev shells. linux only, see
+      # `linuxSystems` above for why. per-language images get a `tendril-`
+      # prefix; the polyglot one is just `tendril`.
+      packages = mkPerLanguageOutputs {
+        genAttrsForSystems = forLinuxSystems;
+        build =
+          {
+            pkgs,
+            name,
+            modules,
+          }:
+          mkDockerImage {
+            inherit pkgs modules;
+            name = if name == "default" then "tendril" else "tendril-${name}";
+          };
+      };
+
+      # `lib.<lang>.{mkShell, mkDockerImage}`: the function-form of the
+      # pre-built `devShells` / `packages` outputs above. exists so consumers
+      # can pass `extraPackages` / `extraEnv` / `extraShellHook` (the flake
+      # outputs are concrete derivations and can't accept those).
+      lib = builtins.mapAttrs (_: mkLanguageLib) languages;
 
       # `nix fmt` reads this. exposed at the umbrella level so consumers
       # pinning tendril can format their nix with our chosen tool.
