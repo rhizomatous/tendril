@@ -76,8 +76,9 @@ adding a new builder never requires touching language modules; adding a new lang
 the sole flake at `flake.nix` exposes:
 
 - `devShells.<sys>.<lang>` — per-language shells, each with the ide module composed in
-- `devShells.<sys>.default` — polyglot shell with every language + ide
-- `packages.<linux-sys>.<lang>` and `packages.<linux-sys>.default` — docker images, parallel to the shells (linux only — darwin pkgs would build broken images)
+- `devShells.<sys>.<lang>-bare` — same, without the ide module (no bundled nvim + git)
+- `devShells.<sys>.default` and `default-bare` — polyglot shells, with and without ide
+- `packages.<linux-sys>.<lang>[-bare]` and `default[-bare]` — docker images, same flavors as the shells (linux only — darwin pkgs would build broken images)
 - `lib.<lang>.{mkShell, mkDockerImage}` — function-form of the per-language outputs, accepting `extraPackages` / `extraEnv` / `extraShellHook` for project-specific layering. both auto-include the ide module; pass `withIde = false` to opt out
 - `formatter.<sys>` — `nixfmt`, so `nix fmt` works for consumers
 

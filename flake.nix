@@ -5,8 +5,10 @@
 #   inputs.tendril.url = "github:rhizomatous/tendril";
 # and reach everything via:
 #   tendril.devShells.<sys>.<lang>              (e.g. ...typescript)
+#   tendril.devShells.<sys>.<lang>-bare         (same, without bundled nvim+git)
 #   tendril.devShells.<sys>.default             (polyglot w/ every registered lang)
-#   tendril.packages.<linux-sys>.<lang>         (pre-built docker images)
+#   tendril.devShells.<sys>.default-bare        (polyglot, no ide)
+#   tendril.packages.<linux-sys>.<lang>[-bare]  (pre-built docker images, same flavors)
 #   tendril.lib.<lang>.{mkShell, mkDockerImage} (extras-accepting variants of
 #                                                the pre-built shells/images)
 #
@@ -62,26 +64,35 @@
       };
 
       # per-system, evaluate every language module and resolve the ide once
-      # (via `mkComposer`, which also builds nvim). returns the per-language
-      # modules list (with ide composed in) for builder consumption, plus an
-      # `all` list for the polyglot default.
+      # (via `mkComposer`, which also builds nvim). returns a flat attrset
+      # keyed by output name, where each value is the modules list for that
+      # output. four flavors per system:
+      #   <lang>         language module & ide
+      #   <lang>-bare    language module only, no ide
+      #   default        every language & ide
+      #   default-bare   every language, no ide
       modulesFor =
         pkgs:
         let
           composer = mkComposer pkgs;
           languageModules = builtins.mapAttrs (_: mkModule: mkModule { inherit pkgs; }) languages;
+          langs = builtins.attrValues languageModules;
+          withIde = builtins.mapAttrs (_: composer.withIde) languageModules;
+          bare = nixpkgs.lib.mapAttrs' (n: m: {
+            name = "${n}-bare";
+            value = composer.withoutIde m;
+          }) languageModules;
         in
-        {
-          inherit languageModules;
-          inherit (composer) ide;
-          perLanguage = builtins.mapAttrs (_: composer.withIde) languageModules;
-          all = (builtins.attrValues languageModules) ++ [ composer.ide ];
+        withIde
+        // bare
+        // {
+          default = langs ++ [ composer.ide ];
+          default-bare = langs;
         };
 
-      # produce the per-language attrs (one entry per language) plus a
-      # polyglot `default`, keyed by system. `build` is called as
-      # `build { pkgs, name, modules }` for each entry; callers ignore `name`
-      # (devShells) or use it to pick an image name (packages).
+      # produce the per-language outputs keyed by system. `build` is called
+      # as `build { pkgs, name, modules }` for each entry; callers ignore
+      # `name` (devShells) or use it for naming (packages).
       mkPerLanguageOutputs =
         {
           genAttrsForSystems,
@@ -92,12 +103,8 @@
           let
             pkgs = nixpkgs.legacyPackages.${system};
             mods = modulesFor pkgs;
-            buildOne = name: modules: build { inherit pkgs name modules; };
           in
-          builtins.mapAttrs buildOne mods.perLanguage
-          // {
-            default = buildOne "default" mods.all;
-          }
+          builtins.mapAttrs (name: modules: build { inherit pkgs name modules; }) mods
         );
     in
     {
@@ -116,7 +123,7 @@
 
       # docker images parallel to the dev shells. linux only, see
       # `linuxSystems` above for why. per-language images get a `tendril-`
-      # prefix; the polyglot one is just `tendril`.
+      # prefix; the polyglot ones drop it.
       packages = mkPerLanguageOutputs {
         genAttrsForSystems = forLinuxSystems;
         build =
@@ -127,7 +134,12 @@
           }:
           mkDockerImage {
             inherit pkgs modules;
-            name = if name == "default" then "tendril" else "tendril-${name}";
+            name =
+              {
+                default = "tendril";
+                default-bare = "tendril-bare";
+              }
+              .${name} or "tendril-${name}";
           };
       };
 

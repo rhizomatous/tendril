@@ -12,27 +12,30 @@
 
 modules:
 let
-  envFold = builtins.foldl' (
-    acc: m:
-    let
-      mEnv = m.env or { };
-      collisions = builtins.filter (k: builtins.hasAttr k acc.env) (builtins.attrNames mEnv);
-    in
-    {
-      env = acc.env // mEnv;
-      collisions = acc.collisions ++ collisions;
-    }
-  ) { env = { }; collisions = [ ]; } modules;
+  envFold =
+    builtins.foldl'
+      (
+        acc: m:
+        let
+          mEnv = m.env or { };
+          collisions = builtins.filter (k: builtins.hasAttr k acc.env) (builtins.attrNames mEnv);
+        in
+        {
+          env = acc.env // mEnv;
+          collisions = acc.collisions ++ collisions;
+        }
+      )
+      {
+        env = { };
+        collisions = [ ];
+      }
+      modules;
 
   mergedEnv =
     if envFold.collisions == [ ] then
       envFold.env
     else
-      lib.warn
-        "tendril mergeModules: env keys set by multiple modules (later wins): ${
-          builtins.concatStringsSep ", " (lib.unique envFold.collisions)
-        }"
-        envFold.env;
+      lib.warn "tendril mergeModules: env keys set by multiple modules (later wins): ${builtins.concatStringsSep ", " (lib.unique envFold.collisions)}" envFold.env;
 in
 {
   packages = lib.unique (builtins.concatLists (map (m: m.packages or [ ]) modules));

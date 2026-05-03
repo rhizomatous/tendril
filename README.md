@@ -27,6 +27,8 @@ see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
 }
 ```
 
+each language also has a `-bare` flavor (`go-bare`, `nix-bare`, `typescript-bare`, plus polyglot `default-bare`) that drops the bundled nvim & git, for consumers using their own editor.
+
 ### extend a shell
 
 ```nix
@@ -43,7 +45,7 @@ see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
 }
 ```
 
-`mkShell` accepts `extraPackages`, `extraEnv`, and `extraShellHook` for layering on top of the base shell. pass `withIde = false` to drop the bundled nvim + git.
+`mkShell` accepts `extraPackages`, `extraEnv`, and `extraShellHook` for layering on top of the base shell. pass `withIde = false` to drop the bundled nvim & git.
 
 ### one shell with everything
 
