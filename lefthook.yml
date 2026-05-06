@@ -1,0 +1,11 @@
+# tendril's git hooks, run via lefthook (https://lefthook.dev).
+
+pre-commit:
+  parallel: true
+  commands:
+    nixfmt:
+      glob: "*.nix"
+      run: nixfmt --check {staged_files}
+    flake-check:
+      glob: "*.nix"
+      run: nix flake check --all-systems --no-build

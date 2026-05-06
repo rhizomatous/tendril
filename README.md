@@ -73,6 +73,7 @@ use flake github:rhizomatous/tendril#typescript
 
 ```bash
 direnv allow                          # auto-activates dev shell on cd
+lefthook install                      # one-time, wires .git/hooks/ to lefthook.yml
 nixfmt path/to/file.nix               # format (nixfmt on PATH via dev shell)
 nix flake check                       # evaluate all outputs
 nix develop .#go                      # standalone per-language shell

@@ -1,7 +1,6 @@
 - [ ] what would flake-utils or flake-parts get us?
 - [ ] retool plan doc into design doc
 - [ ] build a setup/launcher util. set up Nix and any other prereqs? provide scaffold commands for projects? install script?
-- [ ] git hooks
 - [ ] core tools - bashInteractive? coreutils? batcact, rg, etc.? move git in there?
 - [ ] shellHook is silently dropped by mkDockerImage - should that be fixed somehow?
 - [ ] lang module shape isn't validated, so could screw up & silently fail - should it be?
