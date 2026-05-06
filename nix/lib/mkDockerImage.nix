@@ -9,9 +9,6 @@
 # darwin pkgs would build darwin binaries, which won't run inside the
 # linux container the image describes. the umbrella's `packages.<sys>`
 # output restricts itself to linux systems for this reason.
-#
-# adds `bashInteractive` & `coreutils` to contents so `docker run -it` lands
-# in a usable shell. `PATH` is built from every package's `bin/` dir.
 
 { mergeModules }:
 
@@ -27,22 +24,16 @@
 let
   merged = mergeModules modules;
 
-  shellPackages = with pkgs; [
-    bashInteractive
-    coreutils
-  ];
-  allPackages = merged.packages ++ shellPackages;
-
-  pathString = pkgs.lib.makeBinPath allPackages;
+  pathString = pkgs.lib.makeBinPath merged.packages;
   envList = (pkgs.lib.mapAttrsToList (k: v: "${k}=${v}") merged.env) ++ [
     "PATH=${pathString}"
   ];
 in
 pkgs.dockerTools.buildLayeredImage {
   inherit name tag;
-  contents = allPackages;
+  contents = merged.packages;
 
-  # buildLayeredImage doesn't auto-create `WorkingDir`; do it ourselves so
+  # buildLayeredImage doesn't auto-create `WorkingDir`. do it ourselves so
   # `docker run` doesn't fail trying to chdir into a missing path.
   extraCommands = ''
     mkdir -p ${pkgs.lib.removePrefix "/" workingDir}

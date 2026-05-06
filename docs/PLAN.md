@@ -29,12 +29,13 @@ tendril/
 │   └── PLAN.md                  # this file
 ├── .github/workflows/ci.yml
 └── nix/
-    ├── modules/                 # the language + ide modules consumed by the flake
+    ├── modules/                  # source of truth for everything consumed by the flake
+    │   ├── core-tools/module.nix # always-on baseline: shell fundamentals, git, lefthook, modern unix utilities
     │   ├── typescript/module.nix
     │   ├── go/module.nix
     │   ├── nix/module.nix
     │   └── ide/
-    │       ├── module.nix       # `{ nixvim } -> pkgs -> module` for nvim + git, composed into every shell at the builder layer
+    │       ├── module.nix       # `{ nixvim } -> pkgs -> module` for the configured nvim, composed in when `withIde = true`
     │       └── nixvim.nix       # the declarative nvim config
     └── lib/
         ├── default.nix          # composition root: wires nixpkgs + nixvim into the helpers

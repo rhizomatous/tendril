@@ -82,19 +82,12 @@
             name = "${n}-bare";
             value = composer.withoutIde m;
           }) languageModules;
-          # tooling for working on tendril itself
-          tendrilDev = {
-            packages = [ pkgs.lefthook ];
-          };
         in
         withIde
         // bare
         // {
-          default = langs ++ [
-            composer.ide
-            tendrilDev
-          ];
-          default-bare = langs;
+          default = [ composer.coreTools ] ++ langs ++ [ composer.ide ];
+          default-bare = [ composer.coreTools ] ++ langs;
         };
 
       # produce the per-language outputs keyed by system. `build` is called

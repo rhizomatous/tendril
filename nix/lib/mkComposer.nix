@@ -1,31 +1,38 @@
-# `pkgs -> { ide, withIde, withoutIde }`. centralizes the "language + ide"
-# composition so the flake outputs and `mkLanguageLib` can't drift.
+# `pkgs -> { coreTools, ide, withIde, withoutIde }`. centralizes tendril's
+# module composition so the flake outputs can't drift.
 #
-# nvim is evaluated once per call (per pkgs) and the resulting ide module is
-# shared across every `withIde` invocation on that composer. so when the
-# flake builds a per-language list of shells, every shell points at the same
-# nvim derivation.
+# nvim and the core-tools module are evaluated once per call. the resulting
+# derivations are shared across every wrapping invocation on that composer,
+# so when the flake builds a per-language list of shells, every shell points
+# at the same nvim & core-tools derivations.
 #
 # usage:
 #   composer = mkComposer pkgs;
+#   composer.coreTools                 # evaluated core-tools module
 #   composer.ide                       # evaluated ide module
-#   composer.withIde langModule        # [ langModule ide ]
-#   composer.withoutIde langModule     # [ langModule ]
+#   composer.withIde langModule        # [ coreTools, langModule, ide ]
+#   composer.withoutIde langModule     # [ coreTools, langModule ]
 
 { nixvim }:
 
 let
   ideModule = import ../modules/ide/module.nix { inherit nixvim; };
+  coreToolsModule = import ../modules/core-tools/module.nix;
 in
 pkgs:
 let
-  ide = ideModule pkgs;
+  ide = ideModule { inherit pkgs; };
+  coreTools = coreToolsModule { inherit pkgs; };
 in
 {
-  inherit ide;
+  inherit coreTools ide;
   withIde = langModule: [
+    coreTools
     langModule
     ide
   ];
-  withoutIde = langModule: [ langModule ];
+  withoutIde = langModule: [
+    coreTools
+    langModule
+  ];
 }
