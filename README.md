@@ -8,11 +8,11 @@ see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
 
 ## languages
 
-| language   | bundled                                | consumer brings                       |
-| ---------- | -------------------------------------- | ------------------------------------- |
-| typescript | `nodejs_24`                            | `typescript`, `eslint`, `prettier`, … |
-| go         | `go_1_26`, `gopls`, `delve`, `gotools` | `golangci-lint`, …                    |
-| nix        | `nixfmt`, `nil`, `nix-tree`            | `statix`, `deadnix`, …                |
+| language   | bundled                                | consumer brings                         |
+| ---------- | -------------------------------------- | --------------------------------------- |
+| typescript | `nodejs_24`                            | `typescript`, `eslint`, `prettier`, ... |
+| go         | `go_1_26`, `gopls`, `delve`, `gotools` | `golangci-lint`, ...                    |
+| nix        | `nixfmt`, `nil`, `nix-tree`            | `statix`, `deadnix`, ...                |
 
 ## consuming
 
@@ -27,7 +27,14 @@ see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
 }
 ```
 
-each language also has a `-bare` flavor (`go-bare`, `nix-bare`, `typescript-bare`, plus polyglot `default-bare`) that drops the bundled nvim & git, for consumers using their own editor.
+each language ships in four flavors:
+
+- `<lang>` — full default: language tools + nvim (ide) + opencode (agent)
+- `<lang>-editor` — drops the agent
+- `<lang>-agent` — drops the editor
+- `<lang>-bare` — drops both, language tools only
+
+`default[-flavor]` follows the same pattern for the polyglot shell.
 
 ### extend a shell
 
@@ -45,7 +52,7 @@ each language also has a `-bare` flavor (`go-bare`, `nix-bare`, `typescript-bare
 }
 ```
 
-`mkShell` accepts `extraPackages`, `extraEnv`, and `extraShellHook` for layering on top of the base shell. pass `withIde = false` to drop the bundled nvim & git.
+`mkShell` accepts `extraPackages`, `extraEnv`, and `extraShellHook` for layering on top of the base shell.
 
 ### one shell with everything
 

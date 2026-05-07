@@ -1,16 +1,14 @@
-# tendril's sole flake. exposes per-language dev shells, a polyglot default
+# tendril's flake. exposes per-language dev shells, a polyglot default
 # shell, docker images for linux, and a `lib` consumers can compose with.
 #
 # consumers pin a single input:
 #   inputs.tendril.url = "github:rhizomatous/tendril";
 # and reach everything via:
-#   tendril.devShells.<sys>.<lang>              (e.g. ...typescript)
-#   tendril.devShells.<sys>.<lang>-bare         (same, without bundled nvim+git)
-#   tendril.devShells.<sys>.default             (polyglot w/ every registered lang)
-#   tendril.devShells.<sys>.default-bare        (polyglot, no ide)
-#   tendril.packages.<linux-sys>.<lang>[-bare]  (pre-built docker images, same flavors)
-#   tendril.lib.<lang>.{mkShell, mkDockerImage} (extras-accepting variants of
-#                                                the pre-built shells/images)
+#   tendril.devShells.<sys>.<lang>[-{editor,agent,bare}]   (full | no agent | no ide | neither)
+#   tendril.devShells.<sys>.default[-{editor,agent,bare}]  (polyglot, same four flavors)
+#   tendril.packages.<linux-sys>.<lang>[-{editor,agent,bare}]   (pre-built docker images)
+#   tendril.lib.<lang>.{mkShell, mkDockerImage}            (extras-accepting variants of
+#                                                           the pre-built shells/images)
 #
 # also activated by the repo's own `.envrc` for working on tendril itself.
 {
@@ -34,7 +32,7 @@
       nixvim,
     }:
     let
-      # shared helpers (see `./nix/lib/default.nix`).
+      # shared helpers
       tendrilLib = import ./nix/lib { inherit nixpkgs nixvim; };
       inherit (tendrilLib)
         forAllSystems
@@ -44,8 +42,7 @@
         mkShell
         ;
 
-      # docker images need linux pkgs (the contents end up running inside the
-      # container). darwin pkgs would build darwin binaries, broken images.
+      # docker images need linux pkgs, so we can't build on MacOS right now
       linuxSystems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -54,40 +51,51 @@
 
       # registry of languages tendril knows about. adding a new language is a
       # one-line addition here, plus a `nix/modules/<lang>/module.nix`.
-      #
-      # values are module *functions* (`{ pkgs } -> module`), not modules.
-      # we delay evaluation until we know which system's `pkgs` to use.
       languages = {
         go = import ./nix/modules/go/module.nix;
         nix = import ./nix/modules/nix/module.nix;
         typescript = import ./nix/modules/typescript/module.nix;
       };
 
-      # per-system, evaluate every language module and resolve the ide once
-      # (via `mkComposer`, which also builds nvim). returns a flat attrset
+      # per-system, evaluate every language module and resolve the
+      # cross-cutting modules once (via `mkComposer`). returns a flat attrset
       # keyed by output name, where each value is the modules list for that
-      # output. four flavors per system:
-      #   <lang>         language module & ide
-      #   <lang>-bare    language module only, no ide
-      #   default        every language & ide
-      #   default-bare   every language, no ide
+      # output. four flavors per language, plus four polyglot variants:
+      #   <lang>          core + lang + ide + agent  (full)
+      #   <lang>-editor   core + lang + ide          (no agent)
+      #   <lang>-agent    core + lang + agent        (no editor)
+      #   <lang>-bare     core + lang                (neither)
+      #   default[-...]   polyglot variants of the above
       modulesFor =
         pkgs:
         let
           composer = mkComposer pkgs;
           languageModules = builtins.mapAttrs (_: mkModule: mkModule { inherit pkgs; }) languages;
           langs = builtins.attrValues languageModules;
-          withIde = builtins.mapAttrs (_: composer.withIde) languageModules;
-          bare = nixpkgs.lib.mapAttrs' (n: m: {
-            name = "${n}-bare";
-            value = composer.withoutIde m;
-          }) languageModules;
+          # render one flavor across every language
+          flavor =
+            suffix: withIde: withAgent:
+            nixpkgs.lib.mapAttrs' (name: lm: {
+              name = "${name}${suffix}";
+              value = composer.compose {
+                langModule = lm;
+                inherit withIde withAgent;
+              };
+            }) languageModules;
+          polyglotBase = [ composer.coreTools ] ++ langs;
         in
-        withIde
-        // bare
+        flavor "" true true
+        // flavor "-editor" true false
+        // flavor "-agent" false true
+        // flavor "-bare" false false
         // {
-          default = [ composer.coreTools ] ++ langs ++ [ composer.ide ];
-          default-bare = [ composer.coreTools ] ++ langs;
+          default = polyglotBase ++ [
+            composer.ide
+            composer.agent
+          ];
+          default-editor = polyglotBase ++ [ composer.ide ];
+          default-agent = polyglotBase ++ [ composer.agent ];
+          default-bare = polyglotBase;
         };
 
       # produce the per-language outputs keyed by system. `build` is called
@@ -132,8 +140,7 @@
       };
 
       # docker images parallel to the dev shells. linux only, see
-      # `linuxSystems` above for why. per-language images get a `tendril-`
-      # prefix; the polyglot ones drop it.
+      # `linuxSystems` above for why.
       packages = mkPerLanguageOutputs {
         genAttrsForSystems = forLinuxSystems;
         build =
@@ -144,12 +151,12 @@
           }:
           mkDockerImage {
             inherit pkgs modules;
+            # `default[-flavor]` images get renamed `tendril[-flavor]`
             name =
-              {
-                default = "tendril";
-                default-bare = "tendril-bare";
-              }
-              .${name} or "tendril-${name}";
+              if nixpkgs.lib.hasPrefix "default" name then
+                "tendril${nixpkgs.lib.removePrefix "default" name}"
+              else
+                "tendril-${name}";
           };
       };
 
@@ -159,8 +166,7 @@
       # outputs are concrete derivations and can't accept those).
       lib = builtins.mapAttrs mkLanguageLib languages;
 
-      # `nix fmt` reads this. exposed at the umbrella level so consumers
-      # pinning tendril can format their nix with our chosen tool.
+      # `nix fmt` reads this.
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt);
     };
 }

@@ -2,17 +2,13 @@
 # public-facing per-language lib that consumers reach as `tendril.lib.<lang>`.
 #
 # the consumer-facing `mkShell` / `mkDockerImage` auto-include the tendril
-# ide module (configured nvim & git). pass `withIde = false` to opt out.
+# ide and agent modules. pass `withIde = false` and/or `withAgent = false`
+# to opt out of either piece independently.
 #
-# composition is delegated to `mkComposer`, the same helper the flake uses
-# for its own outputs, so per-language and consumer-side shells stay in sync.
-# also stamps `TENDRIL_ENV` onto every output (`<lang>` or `<lang>-bare`)
-# so consumers can tell programmatically which tendril env they're in.
-#
-# consumers use:
-#   lib.<lang>.mkShell { pkgs; ... }              -> dev shell with ide
-#   lib.<lang>.mkShell { pkgs; withIde = false; } -> language only
-#   lib.<lang>.mkDockerImage { pkgs; name; }      -> docker image with ide
+# usage:
+#   lib.<lang>.mkShell { pkgs; ... }                        -> dev shell, full
+#   lib.<lang>.mkShell { pkgs; withAgent = false; }         -> editor only
+#   lib.<lang>.mkDockerImage { pkgs; name; }                -> docker image, full
 
 {
   mkShell,
@@ -23,24 +19,36 @@
 langName: mkModule:
 let
   # build the module list passed to a builder. always includes the language
-  # module; conditionally includes the ide module. tags the env with the
-  # name of the tendril env this shell/image represents.
+  # module; conditionally includes ide and agent modules. also, tag the env with
+  # the name of the tendril env this shell/image represents.
   modulesFor =
-    pkgs: withIde:
+    {
+      pkgs,
+      withIde,
+      withAgent,
+    }:
     let
       composer = mkComposer pkgs;
       langModule = mkModule { inherit pkgs; };
-      base =
-        if withIde then composer.withIde langModule else composer.withoutIde langModule;
-      tendrilEnv = if withIde then langName else "${langName}-bare";
+      base = composer.compose { inherit langModule withIde withAgent; };
+      suffix =
+        if withIde && withAgent then
+          ""
+        else if withIde then
+          "-editor"
+        else if withAgent then
+          "-agent"
+        else
+          "-bare";
     in
-    base ++ [ { env.TENDRIL_ENV = tendrilEnv; } ];
+    base ++ [ { env.TENDRIL_ENV = "${langName}${suffix}"; } ];
 in
 {
   mkShell =
     {
       pkgs,
       withIde ? true,
+      withAgent ? true,
       extraPackages ? [ ],
       extraEnv ? { },
       extraShellHook ? "",
@@ -52,7 +60,7 @@ in
         extraEnv
         extraShellHook
         ;
-      modules = modulesFor pkgs withIde;
+      modules = modulesFor { inherit pkgs withIde withAgent; };
     };
 
   mkDockerImage =
@@ -61,9 +69,10 @@ in
       name,
       tag ? "latest",
       withIde ? true,
+      withAgent ? true,
     }:
     mkDockerImage {
       inherit pkgs name tag;
-      modules = modulesFor pkgs withIde;
+      modules = modulesFor { inherit pkgs withIde withAgent; };
     };
 }

@@ -31,9 +31,10 @@ tendril/
 └── nix/
     ├── modules/                  # source of truth for everything consumed by the flake
     │   ├── core-tools/module.nix # always-on baseline: shell fundamentals, git, lefthook, modern unix utilities
-    │   ├── typescript/module.nix
+    │   ├── agent/module.nix      # AI agent tools (opencode), composed in when `withAgent = true`
     │   ├── go/module.nix
     │   ├── nix/module.nix
+    │   ├── typescript/module.nix
     │   └── ide/
     │       ├── module.nix       # `{ nixvim } -> pkgs -> module` for the configured nvim, composed in when `withIde = true`
     │       └── nixvim.nix       # the declarative nvim config
@@ -76,11 +77,10 @@ adding a new builder never requires touching language modules; adding a new lang
 
 the sole flake at `flake.nix` exposes:
 
-- `devShells.<sys>.<lang>` — per-language shells, each with the ide module composed in
-- `devShells.<sys>.<lang>-bare` — same, without the ide module (no bundled nvim + git)
-- `devShells.<sys>.default` and `default-bare` — polyglot shells, with and without ide
-- `packages.<linux-sys>.<lang>[-bare]` and `default[-bare]` — docker images, same flavors as the shells (linux only — darwin pkgs would build broken images)
-- `lib.<lang>.{mkShell, mkDockerImage}` — function-form of the per-language outputs, accepting `extraPackages` / `extraEnv` / `extraShellHook` for project-specific layering. both auto-include the ide module; pass `withIde = false` to opt out
+- `devShells.<sys>.<lang>[-{editor,agent,bare}]` — per-language shells in four flavors. unsuffixed is the full default (core + lang + ide + agent); `-editor` drops the agent, `-agent` drops the ide, `-bare` drops both
+- `devShells.<sys>.default[-{editor,agent,bare}]` — polyglot shells in the same four flavors
+- `packages.<linux-sys>.<lang>[-{editor,agent,bare}]` and `tendril[-{editor,agent,bare}]` — docker images parallel to the shells (linux only — darwin pkgs would build broken images)
+- `lib.<lang>.{mkShell, mkDockerImage}` — function-form of the per-language outputs, accepting `extraPackages` / `extraEnv` / `extraShellHook` for project-specific layering.
 - `formatter.<sys>` — `nixfmt`, so `nix fmt` works for consumers
 
 ## per-language specifics
