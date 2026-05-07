@@ -52,11 +52,11 @@
       forLinuxSystems = nixpkgs.lib.genAttrs linuxSystems;
 
       # registry of languages tendril knows about. adding a new language is a
-      # one-line addition here, plus a `nix/kits/<lang>.nix`.
+      # one-line addition here, plus a `nix/kits/languages/<lang>.nix`.
       languages = {
-        go = import ./nix/kits/go.nix;
-        nix = import ./nix/kits/nix.nix;
-        typescript = import ./nix/kits/typescript.nix;
+        go = import ./nix/kits/languages/go.nix;
+        nix = import ./nix/kits/languages/nix.nix;
+        typescript = import ./nix/kits/languages/typescript.nix;
       };
 
       # per-system, evaluate every language kit and resolve the
