@@ -17,8 +17,8 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # nixvim: declarative neovim config framework. used by `nix/kits/ide.nix`
-    # to construct the editor that's composed into every language shell.
+    # nixvim, the declarative neovim config framework. used by `nix/kits/ide.nix`
+    # to construct the editor that's composed into ide-flavoured shells.
     nixvim = {
       url = "github:nix-community/nixvim";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -70,30 +70,44 @@
           composer = mkComposer pkgs;
           languageKits = builtins.mapAttrs (_: mkKit: mkKit { inherit pkgs; }) languages;
           langs = builtins.attrValues languageKits;
-          # render one flavour across every language
+          # render one flavour across every language (plus the polyglot variant).
           flavour =
-            suffix: withIde: withAgent:
-            nixpkgs.lib.mapAttrs' (name: lk: {
-              name = "${name}${suffix}";
-              value = composer.compose {
-                langKit = lk;
-                inherit withIde withAgent;
+            {
+              suffix,
+              withIde,
+              withAgent,
+            }:
+            let
+              composeWith = langKits: composer.compose { inherit langKits withIde withAgent; };
+              perLanguage = nixpkgs.lib.mapAttrs' (name: lk: {
+                name = "${name}${suffix}";
+                value = composeWith [ lk ];
+              }) languageKits;
+              polyglot = {
+                "polyglot${suffix}" = composeWith langs;
               };
-            }) languageKits;
-          polyglotBase = [ composer.coreTools ] ++ langs;
+            in
+            perLanguage // polyglot;
         in
-        flavour "" true true
-        // flavour "-editor" true false
-        // flavour "-agent" false true
-        // flavour "-bare" false false
-        // {
-          polyglot = polyglotBase ++ [
-            composer.ide
-            composer.agent
-          ];
-          polyglot-editor = polyglotBase ++ [ composer.ide ];
-          polyglot-agent = polyglotBase ++ [ composer.agent ];
-          polyglot-bare = polyglotBase;
+        flavour {
+          suffix = "";
+          withIde = true;
+          withAgent = true;
+        }
+        // flavour {
+          suffix = "-editor";
+          withIde = true;
+          withAgent = false;
+        }
+        // flavour {
+          suffix = "-agent";
+          withIde = false;
+          withAgent = true;
+        }
+        // flavour {
+          suffix = "-bare";
+          withIde = false;
+          withAgent = false;
         };
 
       # produce the per-language outputs keyed by system. `build` is called

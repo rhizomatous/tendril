@@ -9,10 +9,10 @@
 #
 # usage:
 #   composer = mkComposer pkgs;
-#   composer.coreTools                                    # always-on baseline
-#   composer.ide                                          # configured nvim (opt-in)
-#   composer.agent                                        # opencode (opt-in)
-#   composer.compose { langKit; withIde?; withAgent?; } -> composed kit list
+#   composer.coreTools                                     # always-on baseline
+#   composer.ide                                           # configured nvim (opt-in)
+#   composer.agent                                         # OpenCode (opt-in)
+#   composer.compose { [ langKits ]; withIde?; withAgent?; } -> composed kit list
 
 { nixvim }:
 
@@ -31,14 +31,12 @@ in
   inherit coreTools ide agent;
   compose =
     {
-      langKit,
+      langKits,
       withIde ? true,
       withAgent ? true,
     }:
-    [
-      coreTools
-      langKit
-    ]
+    [ coreTools ]
+    ++ langKits
     ++ (if withIde then [ ide ] else [ ])
     ++ (if withAgent then [ agent ] else [ ]);
 }

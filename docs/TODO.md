@@ -5,6 +5,5 @@
 - [ ] nothing tests mergeKits / mkShell directly, could be nice
 - [ ] opencode -> vim intergration
 - [ ] custom splashscreen in nvim?
-- [ ] improve options for multiparam functions
 - [ ] do i need to think about the Nix module system
 - [ ] extract an "environment" abstraction? "flavour"?
