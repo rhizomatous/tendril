@@ -5,7 +5,8 @@ pre-commit:
   commands:
     nixfmt:
       glob: "*.nix"
-      run: nixfmt --check {staged_files}
+      run: nixfmt {staged_files}
+      stage_fixed: true
     flake-check:
       glob: "*.nix"
       run: nix flake check --all-systems --no-build
