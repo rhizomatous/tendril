@@ -1,4 +1,4 @@
-# tendril's agent module: opencode.
+# tendril's agent kit: opencode.
 
 { pkgs }:
 {

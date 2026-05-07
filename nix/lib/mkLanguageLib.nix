@@ -1,8 +1,8 @@
-# turn a language's `module` *function* (`{ pkgs } -> module`) into the
+# turn a language's `kit` *function* (`{ pkgs } -> kit`) into the
 # public-facing per-language lib that consumers reach as `tendril.lib.<lang>`.
 #
 # the consumer-facing `mkShell` / `mkDockerImage` auto-include the tendril
-# ide and agent modules. pass `withIde = false` and/or `withAgent = false`
+# ide and agent kits. pass `withIde = false` and/or `withAgent = false`
 # to opt out of either piece independently.
 #
 # usage:
@@ -17,12 +17,12 @@ let
   mkDockerImage = import ../builders/mkDockerImage.nix;
 in
 
-langName: mkModule:
+langName: mkKit:
 let
-  # build the module list passed to a builder. always includes the language
-  # module; conditionally includes ide and agent modules. also, tag the env with
+  # build the kit list passed to a builder. always includes the language
+  # kit; conditionally includes ide and agent kits. also, tag the env with
   # the name of the tendril env this shell/image represents.
-  modulesFor =
+  kitsFor =
     {
       pkgs,
       withIde,
@@ -30,8 +30,8 @@ let
     }:
     let
       composer = mkComposer pkgs;
-      langModule = mkModule { inherit pkgs; };
-      base = composer.compose { inherit langModule withIde withAgent; };
+      langKit = mkKit { inherit pkgs; };
+      base = composer.compose { inherit langKit withIde withAgent; };
       suffix =
         if withIde && withAgent then
           ""
@@ -61,7 +61,7 @@ in
         extraEnv
         extraShellHook
         ;
-      modules = modulesFor { inherit pkgs withIde withAgent; };
+      kits = kitsFor { inherit pkgs withIde withAgent; };
     };
 
   mkDockerImage =
@@ -74,6 +74,6 @@ in
     }:
     mkDockerImage {
       inherit pkgs name tag;
-      modules = modulesFor { inherit pkgs withIde withAgent; };
+      kits = kitsFor { inherit pkgs withIde withAgent; };
     };
 }

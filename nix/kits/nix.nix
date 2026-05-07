@@ -1,4 +1,4 @@
-# the nix dev environment, expressed as a reusable `module`.
+# the nix dev environment, expressed as a reusable `kit`.
 
 { pkgs }:
 {

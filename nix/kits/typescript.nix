@@ -1,12 +1,12 @@
-# the typescript dev environment, expressed as a reusable `module`.
+# the typescript dev environment, expressed as a reusable `kit`.
 #
-# a `module` is the unit of reuse in tendril: an attrset of
+# a `kit` is the unit of reuse in tendril: an attrset of
 #   { packages, env ? {}, shellHook ? "" }
-# builders consume modules; modules don't know which builder will use them.
+# builders consume kits; kits don't know which builder will use them.
 #
-# this file is a *function* `{ pkgs } -> module` — pkgs because nixpkgs is
-# per-system. composition with the ide module happens at the builder layer
-# (see `lib/mkLanguageLib.nix`); this module is language-only.
+# this file is a *function* `{ pkgs } -> kit` — pkgs because nixpkgs is
+# per-system. composition with the ide kit happens at the builder layer
+# (see `lib/mkLanguageLib.nix`); this kit is language-only.
 
 { pkgs }:
 {

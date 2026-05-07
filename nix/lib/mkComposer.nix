@@ -1,8 +1,8 @@
 # `{ nixvim } -> pkgs -> { coreTools, ide, agent, compose }`.
-# centralizes tendril's module composition so the flake outputs and
+# centralizes tendril's kit composition so the flake outputs and
 # `mkLanguageLib` can't drift.
 #
-# composed modules are each evaluated once per call. the resulting
+# composed kits are each evaluated once per call. the resulting
 # derivations are shared across every wrapping invocation on that composer,
 # so when the flake builds a per-language list of shells, every shell points
 # at the same nvim/agent/core-tools derivations.
@@ -12,32 +12,32 @@
 #   composer.coreTools                                    # always-on baseline
 #   composer.ide                                          # configured nvim (opt-in)
 #   composer.agent                                        # opencode (opt-in)
-#   composer.compose { langModule; withIde?; withAgent?; } -> composed module
+#   composer.compose { langKit; withIde?; withAgent?; } -> composed kit list
 
 { nixvim }:
 
 let
-  ideModule = import ../modules/ide/module.nix { inherit nixvim; };
-  coreToolsModule = import ../modules/core-tools/module.nix;
-  agentModule = import ../modules/agent/module.nix;
+  ideKit = import ../kits/ide { inherit nixvim; };
+  coreToolsKit = import ../kits/core-tools.nix;
+  agentKit = import ../kits/agent.nix;
 in
 pkgs:
 let
-  ide = ideModule { inherit pkgs; };
-  coreTools = coreToolsModule { inherit pkgs; };
-  agent = agentModule { inherit pkgs; };
+  ide = ideKit { inherit pkgs; };
+  coreTools = coreToolsKit { inherit pkgs; };
+  agent = agentKit { inherit pkgs; };
 in
 {
   inherit coreTools ide agent;
   compose =
     {
-      langModule,
+      langKit,
       withIde ? true,
       withAgent ? true,
     }:
     [
       coreTools
-      langModule
+      langKit
     ]
     ++ (if withIde then [ ide ] else [ ])
     ++ (if withAgent then [ agent ] else [ ]);

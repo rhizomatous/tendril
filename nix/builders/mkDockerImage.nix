@@ -1,9 +1,8 @@
-# build a docker image from a list of `module` attrsets.
+# build a docker image from a list of `kit` attrsets.
 #
-# this is the docker-targeted parallel of `mkShell`: same module shape
-# (`{ packages, env, shellHook }`), different output. `shellHook` doesn't
-# really translate to a docker image (no shell entry hook concept), so it's
-# ignored here; consumers wanting startup commands can pass `entrypoint`.
+# this is the docker-targeted parallel of `mkShell`. `shellHook` doesn't
+# really translate to a docker image, so it's ignored here. consumers
+# wanting startup commands can pass `entrypoint`.
 #
 # `pkgs` must be a Linux pkgs (`x86_64-linux` or `aarch64-linux`); using
 # darwin pkgs would build darwin binaries, which won't run inside the
@@ -14,14 +13,14 @@
   pkgs,
   name,
   tag ? "latest",
-  modules ? [ ],
+  kits ? [ ],
   cmd ? null,
   workingDir ? "/workspace",
   entrypoint ? null,
 }:
 let
-  mergeModules = import ../lib/mergeModules.nix { inherit (pkgs) lib; };
-  merged = mergeModules modules;
+  mergeKits = import ../lib/mergeKits.nix { inherit (pkgs) lib; };
+  merged = mergeKits kits;
 
   pathString = pkgs.lib.makeBinPath merged.packages;
   envList = (pkgs.lib.mapAttrsToList (k: v: "${k}=${v}") merged.env) ++ [

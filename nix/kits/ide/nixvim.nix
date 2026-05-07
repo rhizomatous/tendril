@@ -118,7 +118,7 @@
     };
 
     # LSP auto-attach for the language servers tendril ships in its language
-    # modules. servers only attach when the binary is on PATH. opening a
+    # kits. servers only attach when the binary is on PATH. opening a
     # `.go` file in the typescript shell won't try to run gopls.
     lsp = {
       enable = true;

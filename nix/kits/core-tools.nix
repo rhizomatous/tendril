@@ -1,4 +1,4 @@
-# tendril's base tools module. shell fundamentals, version control, repo tooling,
+# tendril's base tools kit. shell fundamentals, version control, repo tooling,
 # and modern unix utilities every tendril env should have.
 
 { pkgs }:

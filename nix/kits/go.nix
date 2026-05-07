@@ -1,4 +1,4 @@
-# the go dev environment, expressed as a reusable `module`.
+# the go dev environment, expressed as a reusable `kit`.
 
 { pkgs }:
 {

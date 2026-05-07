@@ -1,6 +1,6 @@
 # tendril's internal helper library.
 #
-# takes `nixvim` so it can wire the ide module into `mkComposer`.
+# takes `nixvim` so it can wire the ide kit into `mkComposer`.
 
 { nixpkgs, nixvim }:
 
@@ -13,7 +13,7 @@ let
   # `mkLanguageLib`.
   mkComposer = import ./mkComposer.nix { inherit nixvim; };
 
-  # the `mkModule -> { mkShell, mkDockerImage }` public-api adapter.
+  # the `mkKit -> { mkShell, mkDockerImage }` public-api adapter.
   mkLanguageLib = import ./mkLanguageLib.nix { inherit mkComposer; };
 in
 {

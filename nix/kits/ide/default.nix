@@ -1,9 +1,9 @@
-# the ide module: the configured nvim derivation. composed into each
+# the ide kit: the configured nvim derivation. composed into each
 # tendril shell & image that opts in by `mkComposer`.
 #
-# shape: `{ nixvim } -> { pkgs } -> module`. takes nixvim once at lib-init
+# shape: `{ nixvim } -> { pkgs } -> kit`. takes nixvim once at lib-init
 # time, then `pkgs` per-system at composition time. record-arg in both
-# stages, matching the language and core-tools modules.
+# stages, matching the language and core-tools kits.
 
 { nixvim }:
 

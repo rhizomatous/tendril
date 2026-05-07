@@ -17,7 +17,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # nixvim: declarative neovim config framework. used by `nix/modules/ide/build.nix`
+    # nixvim: declarative neovim config framework. used by `nix/kits/ide/`
     # to construct the editor that's composed into every language shell.
     nixvim = {
       url = "github:nix-community/nixvim";
@@ -52,38 +52,38 @@
       forLinuxSystems = nixpkgs.lib.genAttrs linuxSystems;
 
       # registry of languages tendril knows about. adding a new language is a
-      # one-line addition here, plus a `nix/modules/<lang>/module.nix`.
+      # one-line addition here, plus a `nix/kits/<lang>.nix`.
       languages = {
-        go = import ./nix/modules/go/module.nix;
-        nix = import ./nix/modules/nix/module.nix;
-        typescript = import ./nix/modules/typescript/module.nix;
+        go = import ./nix/kits/go.nix;
+        nix = import ./nix/kits/nix.nix;
+        typescript = import ./nix/kits/typescript.nix;
       };
 
-      # per-system, evaluate every language module and resolve the
-      # cross-cutting modules once (via `mkComposer`). returns a flat attrset
-      # keyed by output name, where each value is the modules list for that
+      # per-system, evaluate every language kit and resolve the
+      # cross-cutting kits once (via `mkComposer`). returns a flat attrset
+      # keyed by output name, where each value is the kit list for that
       # output. four flavours per language, plus four polyglot variants:
       #   <lang>          core + lang + ide + agent  (full)
       #   <lang>-editor   core + lang + ide          (no agent)
       #   <lang>-agent    core + lang + agent        (no editor)
       #   <lang>-bare     core + lang                (neither)
       #   default[-...]   polyglot variants of the above
-      modulesFor =
+      kitsFor =
         pkgs:
         let
           composer = mkComposer pkgs;
-          languageModules = builtins.mapAttrs (_: mkModule: mkModule { inherit pkgs; }) languages;
-          langs = builtins.attrValues languageModules;
+          languageKits = builtins.mapAttrs (_: mkKit: mkKit { inherit pkgs; }) languages;
+          langs = builtins.attrValues languageKits;
           # render one flavour across every language
           flavour =
             suffix: withIde: withAgent:
-            nixpkgs.lib.mapAttrs' (name: lm: {
+            nixpkgs.lib.mapAttrs' (name: lk: {
               name = "${name}${suffix}";
               value = composer.compose {
-                langModule = lm;
+                langKit = lk;
                 inherit withIde withAgent;
               };
-            }) languageModules;
+            }) languageKits;
           polyglotBase = [ composer.coreTools ] ++ langs;
         in
         flavour "" true true
@@ -101,7 +101,7 @@
         };
 
       # produce the per-language outputs keyed by system. `build` is called
-      # as `build { pkgs, name, modules }` for each entry; callers ignore
+      # as `build { pkgs, name, kits }` for each entry; callers ignore
       # `name` (devShells) or use it for naming (packages).
       #
       # tags every output with `TENDRIL_ENV=<name>` so a consumer can tell
@@ -116,15 +116,15 @@
           system:
           let
             pkgs = nixpkgs.legacyPackages.${system};
-            mods = modulesFor pkgs;
+            kits = kitsFor pkgs;
           in
           builtins.mapAttrs (
-            name: modules:
+            name: kitList:
             build {
               inherit pkgs name;
-              modules = modules ++ [ { env.TENDRIL_ENV = name; } ];
+              kits = kitList ++ [ { env.TENDRIL_ENV = name; } ];
             }
-          ) mods
+          ) kits
         );
     in
     {
@@ -135,10 +135,10 @@
         build =
           {
             pkgs,
-            modules,
+            kits,
             ...
           }:
-          mkShell { inherit pkgs modules; };
+          mkShell { inherit pkgs kits; };
       };
 
       # docker images parallel to the dev shells. linux only, see
@@ -149,10 +149,10 @@
           {
             pkgs,
             name,
-            modules,
+            kits,
           }:
           mkDockerImage {
-            inherit pkgs modules;
+            inherit pkgs kits;
             # `default[-flavour]` images get renamed `tendril[-flavour]`
             name =
               if nixpkgs.lib.hasPrefix "default" name then
