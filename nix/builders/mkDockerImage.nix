@@ -19,7 +19,7 @@
   entrypoint ? null,
 }:
 let
-  mergeKits = import ../lib/mergeKits.nix { inherit (pkgs) lib; };
+  mergeKits = import ../utils/mergeKits.nix { inherit (pkgs) lib; };
   merged = mergeKits kits;
 
   pathString = pkgs.lib.makeBinPath merged.packages;

@@ -22,7 +22,7 @@
 }:
 
 let
-  mergeKits = import ../lib/mergeKits.nix { inherit (pkgs) lib; };
+  mergeKits = import ../utils/mergeKits.nix { inherit (pkgs) lib; };
   merged = mergeKits kits;
 in
 pkgs.mkShell (

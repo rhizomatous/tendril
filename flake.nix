@@ -30,12 +30,9 @@
       nixvim,
     }:
     let
-      # shared helpers
-      tendrilLib = import ./nix/lib { inherit nixpkgs nixvim; };
-      inherit (tendrilLib)
-        forAllSystems
-        mkComposer
-        ;
+      # helpers
+      forAllSystems = import ./nix/utils/forAllSystems.nix { inherit nixpkgs; };
+      mkComposer = import ./nix/utils/mkComposer.nix { inherit nixvim; };
 
       # builders
       mkShell = import ./nix/builders/mkShell.nix;
