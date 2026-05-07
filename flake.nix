@@ -1,12 +1,14 @@
-# tendril's flake. exposes per-language dev shells, a polyglot default
-# shell, and matching docker images for linux.
+# tendril's flake. exposes per-language dev shells, polyglot shells, and
+# matching docker images for linux.
 #
 # consumers pin a single input:
 #   inputs.tendril.url = "github:rhizomatous/tendril";
 # and reach everything via:
-#   tendril.devShells.<sys>.<lang>[-{editor,agent,bare}]      (full | no agent | no ide | neither)
-#   tendril.devShells.<sys>.default[-{editor,agent,bare}]     (polyglot, same four flavours)
-#   tendril.packages.<linux-sys>.<lang>[-{editor,agent,bare}] (pre-built docker images)
+#   tendril.devShells.<sys>.<lang>[-{editor,agent,bare}]       (full | no agent | no ide | neither)
+#   tendril.devShells.<sys>.polyglot[-{editor,agent,bare}]     (every language at once, four flavours)
+#   tendril.devShells.<sys>.default                            (alias for polyglot, the full flavour)
+#   tendril.packages.<linux-sys>.<lang>[-{editor,agent,bare}]     (pre-built docker images, named `tendril-<lang>[-flavour]`)
+#   tendril.packages.<linux-sys>.polyglot[-{editor,agent,bare}]   (polyglot docker images, named `tendril-polyglot[-flavour]`)
 #
 # also activated by the repo's own `.envrc` for working on tendril itself.
 {
@@ -61,7 +63,7 @@
       #   <lang>-editor   core + lang + ide          (no agent)
       #   <lang>-agent    core + lang + agent        (no editor)
       #   <lang>-bare     core + lang                (neither)
-      #   default[-...]   polyglot variants of the above
+      #   polyglot[-...]  polyglot variants of the above
       kitsFor =
         pkgs:
         let
@@ -85,13 +87,13 @@
         // flavour "-agent" false true
         // flavour "-bare" false false
         // {
-          default = polyglotBase ++ [
+          polyglot = polyglotBase ++ [
             composer.ide
             composer.agent
           ];
-          default-editor = polyglotBase ++ [ composer.ide ];
-          default-agent = polyglotBase ++ [ composer.agent ];
-          default-bare = polyglotBase;
+          polyglot-editor = polyglotBase ++ [ composer.ide ];
+          polyglot-agent = polyglotBase ++ [ composer.agent ];
+          polyglot-bare = polyglotBase;
         };
 
       # produce the per-language outputs keyed by system. `build` is called
@@ -122,18 +124,22 @@
         );
     in
     {
-      # for each supported system, one named shell per language plus a
-      # polyglot `default`.
-      devShells = mkPerLanguageOutputs {
-        genAttrsForSystems = forAllSystems;
-        build =
-          {
-            pkgs,
-            kits,
-            ...
-          }:
-          mkShell { inherit pkgs kits; };
-      };
+      # for each supported system, one named shell per language plus the
+      # four polyglot variants. `default` aliases the full polyglot.
+      devShells =
+        let
+          base = mkPerLanguageOutputs {
+            genAttrsForSystems = forAllSystems;
+            build =
+              {
+                pkgs,
+                kits,
+                ...
+              }:
+              mkShell { inherit pkgs kits; };
+          };
+        in
+        builtins.mapAttrs (_: shells: shells // { default = shells.polyglot; }) base;
 
       # docker images parallel to the dev shells. linux only, see
       # `linuxSystems` above for why.
@@ -147,12 +153,7 @@
           }:
           mkDockerImage {
             inherit pkgs kits;
-            # `default[-flavour]` images get renamed `tendril[-flavour]`
-            name =
-              if nixpkgs.lib.hasPrefix "default" name then
-                "tendril${nixpkgs.lib.removePrefix "default" name}"
-              else
-                "tendril-${name}";
+            name = "tendril-${name}";
           };
       };
 

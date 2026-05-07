@@ -32,7 +32,7 @@ each language ships in four flavours:
 - `<lang>-agent` — drops the editor
 - `<lang>-bare` — drops both, language tools only
 
-`default[-flavour]` follows the same pattern for the polyglot shell.
+`polyglot[-flavour]` follows the same pattern, with every language bundled together. `default` aliases the full polyglot shell.
 
 ### one shell with everything
 
@@ -40,7 +40,7 @@ each language ships in four flavours:
 {
   inputs.tendril.url = "github:rhizomatous/tendril";
   outputs = { self, nixpkgs, tendril, ... }: {
-    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.default;
+    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.polyglot;
   };
 }
 ```

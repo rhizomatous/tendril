@@ -8,5 +8,4 @@
 - [ ] improve options for multiparam functions
 - [ ] remove x86_64 darwin, it's ooold
 - [ ] do i need to think about the Nix module system
-- [ ] make polyglot a kit type, like the langs
 - [ ] extract an "environment" abstraction? "flavour"?
