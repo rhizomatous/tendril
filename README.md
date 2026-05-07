@@ -4,8 +4,6 @@ a polyglot dev environment, distributed as a Nix flake.
 
 pin tendril, get a batteries-included dev shell: toolchain, language server, debugger, and editor integrations.
 
-see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
-
 ## languages
 
 | language   | bundled                                | consumer brings                         |
@@ -27,14 +25,14 @@ see [`docs/PLAN.md`](docs/PLAN.md) for design and roadmap.
 }
 ```
 
-each language ships in four flavors:
+each language ships in four flavours:
 
 - `<lang>` — full default: language tools + nvim (ide) + opencode (agent)
 - `<lang>-editor` — drops the agent
 - `<lang>-agent` — drops the editor
 - `<lang>-bare` — drops both, language tools only
 
-`default[-flavor]` follows the same pattern for the polyglot shell.
+`default[-flavour]` follows the same pattern for the polyglot shell.
 
 ### extend a shell
 

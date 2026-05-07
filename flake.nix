@@ -5,7 +5,7 @@
 #   inputs.tendril.url = "github:rhizomatous/tendril";
 # and reach everything via:
 #   tendril.devShells.<sys>.<lang>[-{editor,agent,bare}]   (full | no agent | no ide | neither)
-#   tendril.devShells.<sys>.default[-{editor,agent,bare}]  (polyglot, same four flavors)
+#   tendril.devShells.<sys>.default[-{editor,agent,bare}]  (polyglot, same four flavours)
 #   tendril.packages.<linux-sys>.<lang>[-{editor,agent,bare}]   (pre-built docker images)
 #   tendril.lib.<lang>.{mkShell, mkDockerImage}            (extras-accepting variants of
 #                                                           the pre-built shells/images)
@@ -62,7 +62,7 @@
       # per-system, evaluate every language module and resolve the
       # cross-cutting modules once (via `mkComposer`). returns a flat attrset
       # keyed by output name, where each value is the modules list for that
-      # output. four flavors per language, plus four polyglot variants:
+      # output. four flavours per language, plus four polyglot variants:
       #   <lang>          core + lang + ide + agent  (full)
       #   <lang>-editor   core + lang + ide          (no agent)
       #   <lang>-agent    core + lang + agent        (no editor)
@@ -74,8 +74,8 @@
           composer = mkComposer pkgs;
           languageModules = builtins.mapAttrs (_: mkModule: mkModule { inherit pkgs; }) languages;
           langs = builtins.attrValues languageModules;
-          # render one flavor across every language
-          flavor =
+          # render one flavour across every language
+          flavour =
             suffix: withIde: withAgent:
             nixpkgs.lib.mapAttrs' (name: lm: {
               name = "${name}${suffix}";
@@ -86,10 +86,10 @@
             }) languageModules;
           polyglotBase = [ composer.coreTools ] ++ langs;
         in
-        flavor "" true true
-        // flavor "-editor" true false
-        // flavor "-agent" false true
-        // flavor "-bare" false false
+        flavour "" true true
+        // flavour "-editor" true false
+        // flavour "-agent" false true
+        // flavour "-bare" false false
         // {
           default = polyglotBase ++ [
             composer.ide
@@ -153,7 +153,7 @@
           }:
           mkDockerImage {
             inherit pkgs modules;
-            # `default[-flavor]` images get renamed `tendril[-flavor]`
+            # `default[-flavour]` images get renamed `tendril[-flavour]`
             name =
               if nixpkgs.lib.hasPrefix "default" name then
                 "tendril${nixpkgs.lib.removePrefix "default" name}"
