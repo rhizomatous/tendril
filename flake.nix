@@ -17,7 +17,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # nixvim: declarative neovim config framework. used by `nix/kits/ide/`
+    # nixvim: declarative neovim config framework. used by `nix/kits/ide.nix`
     # to construct the editor that's composed into every language shell.
     nixvim = {
       url = "github:nix-community/nixvim";

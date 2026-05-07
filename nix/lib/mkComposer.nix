@@ -17,7 +17,7 @@
 { nixvim }:
 
 let
-  ideKit = import ../kits/ide { inherit nixvim; };
+  ideKit = import ../kits/ide.nix { inherit nixvim; };
   coreToolsKit = import ../kits/core-tools.nix;
   agentKit = import ../kits/agent.nix;
 in
