@@ -5,8 +5,7 @@
 # builders consume kits; kits don't know which builder will use them.
 #
 # this file is a *function* `{ pkgs } -> kit` — pkgs because nixpkgs is
-# per-system. composition with the ide kit happens at the builder layer
-# (see `lib/mkLanguageLib.nix`); this kit is language-only.
+# per-system.
 
 { pkgs }:
 {

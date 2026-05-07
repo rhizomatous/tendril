@@ -1,14 +1,12 @@
 # tendril's flake. exposes per-language dev shells, a polyglot default
-# shell, docker images for linux, and a `lib` consumers can compose with.
+# shell, and matching docker images for linux.
 #
 # consumers pin a single input:
 #   inputs.tendril.url = "github:rhizomatous/tendril";
 # and reach everything via:
-#   tendril.devShells.<sys>.<lang>[-{editor,agent,bare}]   (full | no agent | no ide | neither)
-#   tendril.devShells.<sys>.default[-{editor,agent,bare}]  (polyglot, same four flavours)
-#   tendril.packages.<linux-sys>.<lang>[-{editor,agent,bare}]   (pre-built docker images)
-#   tendril.lib.<lang>.{mkShell, mkDockerImage}            (extras-accepting variants of
-#                                                           the pre-built shells/images)
+#   tendril.devShells.<sys>.<lang>[-{editor,agent,bare}]      (full | no agent | no ide | neither)
+#   tendril.devShells.<sys>.default[-{editor,agent,bare}]     (polyglot, same four flavours)
+#   tendril.packages.<linux-sys>.<lang>[-{editor,agent,bare}] (pre-built docker images)
 #
 # also activated by the repo's own `.envrc` for working on tendril itself.
 {
@@ -37,7 +35,6 @@
       inherit (tendrilLib)
         forAllSystems
         mkComposer
-        mkLanguageLib
         ;
 
       # builders
@@ -161,12 +158,6 @@
                 "tendril-${name}";
           };
       };
-
-      # `lib.<lang>.{mkShell, mkDockerImage}`: the function-form of the
-      # pre-built `devShells` / `packages` outputs above. exists so consumers
-      # can pass `extraPackages` / `extraEnv` / `extraShellHook` (the flake
-      # outputs are concrete derivations and can't accept those).
-      lib = builtins.mapAttrs mkLanguageLib languages;
 
       # `nix fmt` reads this.
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt);

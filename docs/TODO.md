@@ -6,8 +6,7 @@
 - [ ] opencode -> vim intergration
 - [ ] custom splashscreen in nvim?
 - [ ] improve options for multiparam functions
-- [ ] do we _need_ `lib` exported?
 - [ ] remove x86_64 darwin, it's ooold
 - [ ] do i need to think about the Nix module system
 - [ ] make polyglot a kit type, like the langs
-- [ ] extract an "environment" abstraction?
+- [ ] extract an "environment" abstraction? "flavour"?

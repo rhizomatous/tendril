@@ -1,6 +1,6 @@
 # `{ nixvim } -> pkgs -> { coreTools, ide, agent, compose }`.
-# centralizes tendril's kit composition so the flake outputs and
-# `mkLanguageLib` can't drift.
+# centralizes tendril's kit composition,  so each flavour is
+# composed the same way.
 #
 # composed kits are each evaluated once per call. the resulting
 # derivations are shared across every wrapping invocation on that composer,

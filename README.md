@@ -34,24 +34,6 @@ each language ships in four flavours:
 
 `default[-flavour]` follows the same pattern for the polyglot shell.
 
-### extend a shell
-
-```nix
-{
-  inputs.tendril.url = "github:rhizomatous/tendril";
-  outputs = { self, nixpkgs, tendril, ... }: let
-    pkgs = import nixpkgs { system = "aarch64-darwin"; };
-  in {
-    devShells.aarch64-darwin.default = tendril.lib.go.mkShell {
-      inherit pkgs;
-      extraPackages = [ pkgs.golangci-lint pkgs.protobuf ];
-    };
-  };
-}
-```
-
-`mkShell` accepts `extraPackages`, `extraEnv`, and `extraShellHook` for layering on top of the base shell.
-
 ### one shell with everything
 
 ```nix

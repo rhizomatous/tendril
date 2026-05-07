@@ -4,22 +4,11 @@
 
 { nixpkgs, nixvim }:
 
-let
+{
   # the environment helper.
   forAllSystems = import ./forAllSystems.nix { inherit nixpkgs; };
 
-  # `pkgs -> { ide, withIde, withoutIde }`. the single source of truth for
-  # language & ide composition; consumed by both the flake outputs and
-  # `mkLanguageLib`.
+  # `pkgs -> { coreTools, ide, agent, compose }`. the single source of truth
+  # for language & ide composition; consumed by the flake outputs.
   mkComposer = import ./mkComposer.nix { inherit nixvim; };
-
-  # the `mkKit -> { mkShell, mkDockerImage }` public-api adapter.
-  mkLanguageLib = import ./mkLanguageLib.nix { inherit mkComposer; };
-in
-{
-  inherit
-    forAllSystems
-    mkComposer
-    mkLanguageLib
-    ;
 }
