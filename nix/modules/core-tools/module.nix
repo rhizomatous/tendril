@@ -17,5 +17,6 @@
     eza # `ls` with colors & git integration
     ripgrep # fast `grep`
     fzf # fuzzy finder
+    fd # `find` replacement
   ];
 }

@@ -4,6 +4,4 @@
 - [ ] shellHook is silently dropped by mkDockerImage - should that be fixed somehow?
 - [ ] lang module shape isn't validated, so could screw up & silently fail - should it be?
 - [ ] nothing tests mergeModules / mkShell directly, could be nice
-- [ ] aliases: ls, batcat
-- [ ] why formatter as a top level thing?
 - [ ] opencode -> vim intergration
