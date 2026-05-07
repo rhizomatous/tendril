@@ -6,6 +6,5 @@
 - [ ] opencode -> vim intergration
 - [ ] custom splashscreen in nvim?
 - [ ] improve options for multiparam functions
-- [ ] remove x86_64 darwin, it's ooold
 - [ ] do i need to think about the Nix module system
 - [ ] extract an "environment" abstraction? "flavour"?

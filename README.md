@@ -54,7 +54,7 @@ use flake github:rhizomatous/tendril#typescript
 
 ## platforms
 
-`aarch64-darwin`, `x86_64-darwin`, `aarch64-linux`, `x86_64-linux`. requires nix >= 2.19.
+`aarch64-darwin`, `aarch64-linux`, `x86_64-linux`. requires nix >= 2.19.
 
 ## developing tendril
 
