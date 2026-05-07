@@ -13,8 +13,6 @@
 # extras. taking a list lets the caller compose ide & language & whatever
 # without re-deriving the merge logic.
 
-{ mergeModules }:
-
 {
   pkgs,
   modules ? [ ],
@@ -24,6 +22,7 @@
 }:
 
 let
+  mergeModules = import ../lib/mergeModules.nix { inherit (pkgs) lib; };
   merged = mergeModules modules;
 in
 pkgs.mkShell (

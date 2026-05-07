@@ -37,10 +37,12 @@
       inherit (tendrilLib)
         forAllSystems
         mkComposer
-        mkDockerImage
         mkLanguageLib
-        mkShell
         ;
+
+      # builders
+      mkShell = import ./nix/builders/mkShell.nix;
+      mkDockerImage = import ./nix/builders/mkDockerImage.nix;
 
       # docker images need linux pkgs, so we can't build on MacOS right now
       linuxSystems = [

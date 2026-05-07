@@ -10,11 +10,12 @@
 #   lib.<lang>.mkShell { pkgs; withAgent = false; }         -> editor only
 #   lib.<lang>.mkDockerImage { pkgs; name; }                -> docker image, full
 
-{
-  mkShell,
-  mkDockerImage,
-  mkComposer,
-}:
+{ mkComposer }:
+
+let
+  mkShell = import ../builders/mkShell.nix;
+  mkDockerImage = import ../builders/mkDockerImage.nix;
+in
 
 langName: mkModule:
 let

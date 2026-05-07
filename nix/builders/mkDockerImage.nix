@@ -10,8 +10,6 @@
 # linux container the image describes. the umbrella's `packages.<sys>`
 # output restricts itself to linux systems for this reason.
 
-{ mergeModules }:
-
 {
   pkgs,
   name,
@@ -22,6 +20,7 @@
   entrypoint ? null,
 }:
 let
+  mergeModules = import ../lib/mergeModules.nix { inherit (pkgs) lib; };
   merged = mergeModules modules;
 
   pathString = pkgs.lib.makeBinPath merged.packages;
