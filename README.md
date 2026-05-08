@@ -4,6 +4,8 @@ a polyglot dev environment, distributed as a Nix flake.
 
 pin tendril, get a batteries-included dev shell: toolchain, language server, debugger, and editor integrations.
 
+see [`docs/DESIGN.md`](docs/DESIGN.md) for the shape of the project and the architectural choices behind it.
+
 ## languages
 
 | language   | bundled                                | consumer brings                         |

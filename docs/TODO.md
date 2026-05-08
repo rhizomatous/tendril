@@ -1,9 +1,7 @@
-- [ ] kill plan doc, rewrite as design doc
 - [ ] what would flake-utils or flake-parts get us?
 - [ ] build a setup/launcher util. set up Nix and any other prereqs? provide scaffold commands for projects? install script?
 - [ ] shellHook is silently dropped by mkDockerImage - should that be fixed somehow?
 - [ ] nothing tests mergeKits / mkShell directly, could be nice
-- [ ] opencode -> vim intergration
+- [ ] opencode -> vim integration
 - [ ] custom splashscreen in nvim?
 - [ ] do i need to think about the Nix module system
-- [ ] extract an "environment" abstraction? "flavour"?
