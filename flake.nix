@@ -4,13 +4,13 @@
 # consumers pin a single input:
 #   inputs.tendril.url = "github:rhizomatous/tendril";
 # and reach everything via:
-#   tendril.devShells.<sys>.<lang>[-{editor,agent,bare}]           (full | no agent | no ide | neither)
-#   tendril.devShells.<sys>.polyglot[-{editor,agent,bare}]         (every language at once, four flavours)
-#   tendril.devShells.<sys>.default                                (alias for polyglot, the full flavour)
-#   tendril.packages.<linux-sys>.<lang>[-{editor,agent,bare}]      (pre-built docker images, named `tendril-<lang>[-flavour]`)
-#   tendril.packages.<linux-sys>.polyglot[-{editor,agent,bare}]    (polyglot docker images, named `tendril-polyglot[-flavour]`)
-#   tendril.packages.<linux-sys>.vm-<lang>[-{editor,agent,bare}]   (runnable NixOS VM scripts, hostname `tendril-vm-<lang>[-flavour]`)
-#   tendril.packages.<linux-sys>.vm-polyglot[-{editor,agent,bare}] (polyglot NixOS VMs)
+#   tendril.devShells.<sys>.<lang>-{ci,agent,ide}            (base | base+opencode | everything)
+#   tendril.devShells.<sys>.polyglot-{ci,agent,ide}          (every language at once, three flavours)
+#   tendril.devShells.<sys>.default                          (alias for polyglot-ide)
+#   tendril.packages.<linux-sys>.<lang>-{ci,agent,ide}       (pre-built docker images, named `tendril-<lang>-<flavour>`)
+#   tendril.packages.<linux-sys>.polyglot-{ci,agent,ide}     (polyglot docker images, named `tendril-polyglot-<flavour>`)
+#   tendril.packages.<linux-sys>.vm-<lang>-{ci,agent,ide}    (runnable NixOS VM scripts, hostname `tendril-vm-<lang>-<flavour>`)
+#   tendril.packages.<linux-sys>.vm-polyglot-{ci,agent,ide}  (polyglot NixOS VMs)
 #
 # also activated by the repo's own `.envrc` for working on tendril itself.
 {
@@ -63,12 +63,11 @@
       # per-system, evaluate every language kit and resolve the
       # cross-cutting kits once (via `mkComposer`). returns a flat attrset
       # keyed by output name, where each value is the kit list for that
-      # output. four flavours per language, plus four polyglot variants:
-      #   <lang>          core + lang + ide + agent  (full)
-      #   <lang>-editor   core + lang + ide          (no agent)
-      #   <lang>-agent    core + lang + agent        (no editor)
-      #   <lang>-bare     core + lang                (neither)
-      #   polyglot[-...]  polyglot variants of the above
+      # output. three flavours per language, plus the polyglot variants:
+      #   <lang>-ci       core + lang                (base only)
+      #   <lang>-agent    core + lang + agent        (base + opencode)
+      #   <lang>-ide      core + lang + ide + agent  (everything)
+      #   polyglot-...    polyglot variants of the above
       kitsFor =
         pkgs:
         let
@@ -95,13 +94,8 @@
             perLanguage // polyglot;
         in
         flavour {
-          suffix = "";
-          withIde = true;
-          withAgent = true;
-        }
-        // flavour {
-          suffix = "-editor";
-          withIde = true;
+          suffix = "-ci";
+          withIde = false;
           withAgent = false;
         }
         // flavour {
@@ -110,9 +104,9 @@
           withAgent = true;
         }
         // flavour {
-          suffix = "-bare";
-          withIde = false;
-          withAgent = false;
+          suffix = "-ide";
+          withIde = true;
+          withAgent = true;
         };
 
       # produce the per-language outputs keyed by system. `build` is called
@@ -152,8 +146,8 @@
         );
     in
     {
-      # for each supported system, one named shell per language plus the
-      # four polyglot variants. `default` aliases the full polyglot shell.
+      # for each supported system, one named shell per language flavour plus
+      # the polyglot variants. `default` aliases the full polyglot-ide shell.
       devShells =
         let
           base = mkPerLanguageOutputs {
@@ -167,7 +161,7 @@
               mkShell { inherit pkgs kits; };
           };
         in
-        builtins.mapAttrs (_: shells: shells // { default = shells.polyglot; }) base;
+        builtins.mapAttrs (_: shells: shells // { default = shells.polyglot-ide; }) base;
 
       # docker images and NixOS VMs parallel to the dev shells.
       # linux only, see `linuxSystems` above for why.

@@ -20,5 +20,5 @@ jobs:
 
       - name: format check
         run: |
-          nix develop -c bash -c \
+          nix develop .#polyglot-ci -c bash -c \
             'find . -name "*.nix" -not -path "./.git/*" | xargs nixfmt --check'

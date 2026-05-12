@@ -7,3 +7,6 @@
 - [ ] do i need to think about the Nix module system
 - [ ] mkNixosVm uses a default `tendril:tendril` user with initialPassword. not great long-term. swap to ssh-key auth? accept a user/key spec from the caller?
 - [ ] auto-attach linters?
+- [ ] investigate using nixos-generators? maybe could output vm images for stuff like AWS images
+- [ ] investigate nix2container?
+- [ ] make other a-r tools use it

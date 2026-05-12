@@ -49,18 +49,17 @@ environments come in multiple languages, currently six*:
 - `typescript`
 - `polyglot` *(not really _a_ language, just all of the languages, but close 'nuff)
 
-each language comes in four flavours:
-- `<lang>`: a full shell, with language tools, nvim (ide), & opencode (agent)
-- `<lang>-editor`: drops the agent
-- `<lang>-agent`: drops the editor
-- `<lang>-bare`: drops both, language tools only
+each language comes in three flavours:
+- `<lang>-ci`: language tools only. the base. small enough to be useful in CI.
+- `<lang>-agent`: base & opencode. for running an agent in a sandbox.
+- `<lang>-ide`: base & opencode & nvim. for interactive dev.
 
 each flavour can be run in any of the execution contexts tendril supports. currently, that is:
 - Nix dev shells
 - containers
 - NixOS VMs
 
-each environment is tagged with `TENDRIL_ENV=<name>` (e.g. `go-editor`, `polyglot-bare`) so any shell or script can introspect which tendril env it's sitting in.
+each environment is tagged with `TENDRIL_ENV=<name>` (e.g. `go-ide`, `polyglot-ci`) so any shell or script can introspect which tendril env it's sitting in.
 
 ## kits
 
@@ -149,19 +148,19 @@ tendril has many kits (e.g `ide`, `agent`, `core-tools`) that are cross-cutting 
 
 this is useful so that we can instantiate consistent tendril environments for different execution contexts. for example, each of a dev env, a CI runner vm, and an agent in a container, should be equally possible to stand up with tendril from the same template.
 
-`compose` is the function that actually constructs environments. it should be called for each language and each desired configuration. optional kits are included as parameters, such as `withAgent`. this allows the construction of the four flavours of tendril environment.
+`compose` is the function that actually constructs environments. it should be called for each language and each desired configuration. optional kits are included as parameters, such as `withAgent`. this allows the construction of the three flavours of tendril environment.
 
 ## flake outputs
 
 ```
-devShells.<sys>.<lang>[-{editor,agent,bare}]            # per-language shells, four flavours
-devShells.<sys>.polyglot[-{editor,agent,bare}]          # polyglot shells, same four flavours
-devShells.<sys>.default                                 # alias for polyglot (the full flavour)
-packages.<linux-sys>.<lang>[-{editor,agent,bare}]       # docker images
-packages.<linux-sys>.polyglot[-{editor,agent,bare}]     # polyglot docker images
-packages.<linux-sys>.vm-<lang>[-{editor,agent,bare}]    # NixOS VM scripts
-packages.<linux-sys>.vm-polyglot[-{editor,agent,bare}]  # polyglot NixOS VMs
-formatter.<sys>                                         # nixfmt, so `nix fmt` works
+devShells.<sys>.<lang>-{ci,agent,ide}            # per-language shells, three flavours
+devShells.<sys>.polyglot-{ci,agent,ide}          # polyglot shells, same three flavours
+devShells.<sys>.default                          # alias for polyglot-ide
+packages.<linux-sys>.<lang>-{ci,agent,ide}       # docker images
+packages.<linux-sys>.polyglot-{ci,agent,ide}     # polyglot docker images
+packages.<linux-sys>.vm-<lang>-{ci,agent,ide}    # NixOS VM scripts
+packages.<linux-sys>.vm-polyglot-{ci,agent,ide}  # polyglot NixOS VMs
+formatter.<sys>                                  # nixfmt, so `nix fmt` works
 ```
 
 generation is mechanical. when a language is added, every flavour and every output (shell, docker, lib) follows automatically.

@@ -24,25 +24,24 @@ see [`docs/DESIGN.md`](docs/DESIGN.md) for the shape of the project and the arch
 {
   inputs.tendril.url = "github:rhizomatous/tendril";
   outputs = { self, nixpkgs, tendril, ... }: {
-    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.go;
+    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.go-ide;
   };
 }
 ```
 
-each language ships in four flavours:
+each language ships in three flavours:
 
-- `<lang>` — full default: language tools + nvim (ide) + opencode (agent)
-- `<lang>-editor` — drops the agent
-- `<lang>-agent` — drops the editor
-- `<lang>-bare` — drops both, language tools only
+- `<lang>-ci` — base: language tools only
+- `<lang>-agent` — base + opencode (the agent)
+- `<lang>-ide` — everything: language tools + opencode + nvim (the ide)
 
-`polyglot[-flavour]` follows the same pattern, with every language bundled together. `default` aliases the full polyglot shell.
+`polyglot-{ci,agent,ide}` follows the same pattern, with every language bundled together. `default` aliases `polyglot-ide`.
 
 each flavour is provided as a dev shell. but shells aren't the only target! each language and flavour also produces a docker image and a NixOS VM under `packages.<linux-sys>`:
 
 ```bash
-nix build  github:rhizomatous/tendril#go            # docker image
-nix run    github:rhizomatous/tendril#vm-go         # boot a NixOS VM with the go env
+nix build  github:rhizomatous/tendril#go-ci         # docker image
+nix run    github:rhizomatous/tendril#vm-go-ide     # boot a NixOS VM with the go env
 ```
 
 ### one shell with everything
@@ -51,7 +50,7 @@ nix run    github:rhizomatous/tendril#vm-go         # boot a NixOS VM with the g
 {
   inputs.tendril.url = "github:rhizomatous/tendril";
   outputs = { self, nixpkgs, tendril, ... }: {
-    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.polyglot;
+    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.polyglot-ide;
   };
 }
 ```
@@ -60,7 +59,7 @@ nix run    github:rhizomatous/tendril#vm-go         # boot a NixOS VM with the g
 
 ```bash
 # .envrc in the consumer repo
-use flake github:rhizomatous/tendril#typescript
+use flake github:rhizomatous/tendril#typescript-ide
 ```
 
 ## platforms
@@ -74,5 +73,5 @@ direnv allow                          # auto-activates dev shell on cd
 lefthook install                      # one-time, wires .git/hooks/ to lefthook.yml
 nixfmt path/to/file.nix               # format (nixfmt on PATH via dev shell)
 nix flake check                       # evaluate all outputs
-nix develop .#go                      # standalone per-language shell
+nix develop .#go-ide                  # standalone per-language shell
 ```
