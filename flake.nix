@@ -55,6 +55,7 @@
       languages = {
         go = import ./nix/kits/languages/go.nix;
         nix = import ./nix/kits/languages/nix.nix;
+        python = import ./nix/kits/languages/python.nix;
         typescript = import ./nix/kits/languages/typescript.nix;
       };
 

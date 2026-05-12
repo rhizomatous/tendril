@@ -135,6 +135,7 @@ let
         servers = {
           gopls.enable = true;
           nil_ls.enable = true;
+          pyright.enable = true;
           ts_ls.enable = true;
         };
       };
@@ -156,6 +157,10 @@ let
             go = [
               "goimports"
               "gofmt"
+            ];
+            python = [
+              "ruff_organize_imports"
+              "ruff_format"
             ];
             javascript = [ "prettier" ];
             typescript = [ "prettier" ];

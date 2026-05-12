@@ -31,6 +31,7 @@ tendril/
     │   └── languages/      # per-language toolchains
     │       ├── go.nix
     │       ├── nix.nix
+    │       ├── python.nix
     │       └── typescript.nix
     └── utils/              # internal helpers
 ```
@@ -39,9 +40,10 @@ tendril/
 
 an **environment** is a fully-functioning tendril derivation. each environment is constructed by feeding some **kits** into a **builder**.
 
-environments come in multiple languages, currently four*:
+environments come in multiple languages, currently five*:
 - `go`
 - `nix`
+- `python`
 - `typescript`
 - `polyglot` *(not really _a_ language, just all of the languages, but close 'nuff)
 
@@ -88,6 +90,7 @@ languages are a slightly special type of kit. the core of tendril, after all, is
 | typescript | `nodejs_24`, `typescript-language-server` | node 24 LTS through apr 2028. lsp on PATH so nvim's `ts_ls` finds it.   |
 | go         | `go_1_26`, `gopls`, `delve`, `gotools` | lsp/debugger expected on PATH; `GOTOOLCHAIN=local` blocks silent toolchain downloads. |
 | nix        | `nixfmt`, `nil`, `nix-tree`            | RFC 166 formatter; lsp; closure inspector for debugging.                   |
+| python     | `python314`, `uv`, `pyright`, `ruff`   | uv for env/dep management; pyright for lsp; ruff for format. `UV_PYTHON_DOWNLOADS=never` blocks silent interpreter downloads. |
 
 what's *not* bundled: things like `eslint`, `prettier`, `vitest`, `golangci-lint`, `statix`, `deadnix`. those are pinnable per-project (in `package.json`, `go.mod`'s `tool` directive, etc.) and don't belong in a shared base.
 
@@ -97,6 +100,7 @@ what's *not* bundled: things like `eslint`, `prettier`, `vitest`, `golangci-lint
 languages = {
   go = import ./nix/kits/languages/go.nix;
   nix = import ./nix/kits/languages/nix.nix;
+  python = import ./nix/kits/languages/python.nix;
   typescript = import ./nix/kits/languages/typescript.nix;
 };
 ```
