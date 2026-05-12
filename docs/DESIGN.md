@@ -54,6 +54,7 @@ each language comes in four flavours:
 each flavour can be run in any of the execution contexts tendril supports. currently, that is:
 - Nix dev shells
 - containers
+- NixOS VMs
 
 each environment is tagged with `TENDRIL_ENV=<name>` (e.g. `go-editor`, `polyglot-bare`) so any shell or script can introspect which tendril env it's sitting in.
 
@@ -116,10 +117,19 @@ lspconfig is set up with auto-attach for for all languages tendril knows about. 
 
 a **builder** is a functions `[ kits ] -> derivation` that construct a tendril environment with the given set of kits.
 
-- `lib.mkShell` wraps `pkgs.mkShell`.
-- `lib.mkDockerImage` wraps `pkgs.dockerTools.buildLayeredImage`.
+- `mkShell` wraps `pkgs.mkShell`.
+- `mkDockerImage` wraps `pkgs.dockerTools.buildLayeredImage`.
+- `mkNixosVm` wraps `nixpkgs.lib.nixosSystem`, returning a runnable VM script.
 
 builders must handle merging kits. that's because a complete tendril environment is constructed of several kits composed together. the composition is determined at the callsite. as a result, builders are isolated and modular. we can add a new builder without touching the language kits, or add a new language without fiddling with builders.
+
+each builder maps the kit into its target's idiom:
+
+| kit field   | mkShell             | mkDockerImage         | mkNixosVm                            |
+| ----------- | ------------------- | --------------------- | ------------------------------------ |
+| `packages`  | shell PATH          | image `contents`      | `environment.systemPackages`         |
+| `env`       | shell env vars      | container `Env`       | `environment.variables`              |
+| `shellHook` | bash on shell entry | dropped (TODO)        | `programs.bash.interactiveShellInit` |
 
 ## composition
 
@@ -136,12 +146,14 @@ this is useful so that we can instantiate consistent tendril environments for di
 ## flake outputs
 
 ```
-devShells.<sys>.<lang>[-{editor,agent,bare}]         # per-language shells, four flavours
-devShells.<sys>.polyglot[-{editor,agent,bare}]       # polyglot shells, same four flavours
-devShells.<sys>.default                              # alias for polyglot (the full flavour)
-packages.<linux-sys>.<lang>[-{editor,agent,bare}]    # docker images
-packages.<linux-sys>.polyglot[-{editor,agent,bare}]  # polyglot docker images
-formatter.<sys>                                      # nixfmt, so `nix fmt` works
+devShells.<sys>.<lang>[-{editor,agent,bare}]            # per-language shells, four flavours
+devShells.<sys>.polyglot[-{editor,agent,bare}]          # polyglot shells, same four flavours
+devShells.<sys>.default                                 # alias for polyglot (the full flavour)
+packages.<linux-sys>.<lang>[-{editor,agent,bare}]       # docker images
+packages.<linux-sys>.polyglot[-{editor,agent,bare}]     # polyglot docker images
+packages.<linux-sys>.vm-<lang>[-{editor,agent,bare}]    # NixOS VM scripts
+packages.<linux-sys>.vm-polyglot[-{editor,agent,bare}]  # polyglot NixOS VMs
+formatter.<sys>                                         # nixfmt, so `nix fmt` works
 ```
 
 generation is mechanical. when a language is added, every flavour and every output (shell, docker, lib) follows automatically.
@@ -152,6 +164,6 @@ generation is mechanical. when a language is added, every flavour and every outp
 systems = [ "aarch64-darwin" "x86_64-linux" "aarch64-linux" ];
 ```
 
-however, containers are linux-only. `pkgs.dockerTools.buildLayeredImage` will happily run on darwin pkgs, but produces an image whose contents are darwin binaries, which can't execute inside a linux container. the flake restricts `packages.*` to `x86_64-linux` and `aarch64-linux` to make this fail at evaluation rather than at runtime.
+however, containers and NixOS VMs are linux-only. `pkgs.dockerTools.buildLayeredImage` will happily run on darwin pkgs, but produces an image whose contents are darwin binaries, which can't execute inside a linux container. the NixOS VM builder likewise will not cooperate. the flake restricts `packages.*` to `x86_64-linux` and `aarch64-linux` to make this fail at evaluation rather than at runtime.
 
 building those images on a darwin host therefore needs a linux builder.

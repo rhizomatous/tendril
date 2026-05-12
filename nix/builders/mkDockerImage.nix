@@ -1,10 +1,8 @@
 # build a docker image from a list of `kit` attrsets.
+# `shellHook` doesn't really translate to a docker image, so it's ignored
+# here. consumers wanting startup commands can pass `entrypoint`.
 #
-# this is the docker-targeted parallel of `mkShell`. `shellHook` doesn't
-# really translate to a docker image, so it's ignored here. consumers
-# wanting startup commands can pass `entrypoint`.
-#
-# `pkgs` must be a Linux pkgs (`x86_64-linux` or `aarch64-linux`); using
+# `pkgs` must be a Linux pkgs (`x86_64-linux` or `aarch64-linux`). using
 # darwin pkgs would build darwin binaries, which won't run inside the
 # linux container the image describes. the umbrella's `packages.<sys>`
 # output restricts itself to linux systems for this reason.

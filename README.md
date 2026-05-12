@@ -36,6 +36,13 @@ each language ships in four flavours:
 
 `polyglot[-flavour]` follows the same pattern, with every language bundled together. `default` aliases the full polyglot shell.
 
+each flavour is provided as a dev shell. but shells aren't the only target! each language and flavour also produces a docker image and a NixOS VM under `packages.<linux-sys>`:
+
+```bash
+nix build  github:rhizomatous/tendril#go            # docker image
+nix run    github:rhizomatous/tendril#vm-go         # boot a NixOS VM with the go env
+```
+
 ### one shell with everything
 
 ```nix

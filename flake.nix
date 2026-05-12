@@ -1,14 +1,16 @@
-# tendril's flake. exposes per-language dev shells, polyglot shells, and
-# matching docker images for linux.
+# tendril's flake. exposes per-language dev shells, polyglot shells,
+# matching docker images, and matching NixOS VMs for linux.
 #
 # consumers pin a single input:
 #   inputs.tendril.url = "github:rhizomatous/tendril";
 # and reach everything via:
-#   tendril.devShells.<sys>.<lang>[-{editor,agent,bare}]       (full | no agent | no ide | neither)
-#   tendril.devShells.<sys>.polyglot[-{editor,agent,bare}]     (every language at once, four flavours)
-#   tendril.devShells.<sys>.default                            (alias for polyglot, the full flavour)
-#   tendril.packages.<linux-sys>.<lang>[-{editor,agent,bare}]     (pre-built docker images, named `tendril-<lang>[-flavour]`)
-#   tendril.packages.<linux-sys>.polyglot[-{editor,agent,bare}]   (polyglot docker images, named `tendril-polyglot[-flavour]`)
+#   tendril.devShells.<sys>.<lang>[-{editor,agent,bare}]           (full | no agent | no ide | neither)
+#   tendril.devShells.<sys>.polyglot[-{editor,agent,bare}]         (every language at once, four flavours)
+#   tendril.devShells.<sys>.default                                (alias for polyglot, the full flavour)
+#   tendril.packages.<linux-sys>.<lang>[-{editor,agent,bare}]      (pre-built docker images, named `tendril-<lang>[-flavour]`)
+#   tendril.packages.<linux-sys>.polyglot[-{editor,agent,bare}]    (polyglot docker images, named `tendril-polyglot[-flavour]`)
+#   tendril.packages.<linux-sys>.vm-<lang>[-{editor,agent,bare}]   (runnable NixOS VM scripts, hostname `tendril-vm-<lang>[-flavour]`)
+#   tendril.packages.<linux-sys>.vm-polyglot[-{editor,agent,bare}] (polyglot NixOS VMs)
 #
 # also activated by the repo's own `.envrc` for working on tendril itself.
 {
@@ -39,6 +41,7 @@
       # builders
       mkShell = import ./nix/builders/mkShell.nix;
       mkDockerImage = import ./nix/builders/mkDockerImage.nix;
+      mkNixosVm = import ./nix/builders/mkNixosVm.nix { inherit nixpkgs; };
 
       # docker images need linux pkgs, so we can't build on MacOS right now
       linuxSystems = [
@@ -114,13 +117,14 @@
       # as `build { pkgs, name, kits }` for each entry; callers ignore
       # `name` (devShells) or use it for naming (packages).
       #
-      # tags every output with `TENDRIL_ENV=<name>` so a consumer can tell
-      # programmatically (e.g. from a shell prompt or script) which tendril
-      # env they're sitting in.
+      # `namePrefix` lets callers occupy a distinct namespace within the
+      # same output attrset. docker images at `packages.<sys>.<lang>`
+      # and VMs at `packages.<sys>.vm-<lang>` both flow through here.
       mkPerLanguageOutputs =
         {
           genAttrsForSystems,
           build,
+          namePrefix ? "",
         }:
         genAttrsForSystems (
           system:
@@ -128,18 +132,26 @@
             pkgs = nixpkgs.legacyPackages.${system};
             kits = kitsFor pkgs;
           in
-          builtins.mapAttrs (
-            name: kitList:
-            build {
-              inherit pkgs name;
-              kits = kitList ++ [ { env.TENDRIL_ENV = name; } ];
+          nixpkgs.lib.mapAttrs' (
+            baseName: kitList:
+            let
+              name = "${namePrefix}${baseName}";
+            in
+            {
+              inherit name;
+              value = build {
+                inherit pkgs name;
+                # tag every output with `TENDRIL_ENV=<name>` so a consumer can tell
+                # programmatically which tendril env they're sitting in.
+                kits = kitList ++ [ { env.TENDRIL_ENV = name; } ];
+              };
             }
           ) kits
         );
     in
     {
       # for each supported system, one named shell per language plus the
-      # four polyglot variants. `default` aliases the full polyglot.
+      # four polyglot variants. `default` aliases the full polyglot shell.
       devShells =
         let
           base = mkPerLanguageOutputs {
@@ -155,21 +167,36 @@
         in
         builtins.mapAttrs (_: shells: shells // { default = shells.polyglot; }) base;
 
-      # docker images parallel to the dev shells. linux only, see
-      # `linuxSystems` above for why.
-      packages = mkPerLanguageOutputs {
-        genAttrsForSystems = forLinuxSystems;
-        build =
-          {
-            pkgs,
-            name,
-            kits,
-          }:
-          mkDockerImage {
-            inherit pkgs kits;
-            name = "tendril-${name}";
+      # docker images and NixOS VMs parallel to the dev shells.
+      # linux only, see `linuxSystems` above for why.
+      packages =
+        let
+          dockerImages = mkPerLanguageOutputs {
+            genAttrsForSystems = forLinuxSystems;
+            build =
+              {
+                pkgs,
+                name,
+                kits,
+              }:
+              mkDockerImage {
+                inherit pkgs kits;
+                name = "tendril-${name}";
+              };
           };
-      };
+          vms = mkPerLanguageOutputs {
+            genAttrsForSystems = forLinuxSystems;
+            namePrefix = "vm-";
+            build =
+              {
+                pkgs,
+                name,
+                kits,
+              }:
+              mkNixosVm { inherit pkgs name kits; };
+          };
+        in
+        forLinuxSystems (system: dockerImages.${system} // vms.${system});
 
       # `nix fmt` reads this.
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt);
