@@ -6,3 +6,4 @@
 - [ ] custom splashscreen in nvim?
 - [ ] do i need to think about the Nix module system
 - [ ] mkNixosVm uses a default `tendril:tendril` user with initialPassword. not great long-term. swap to ssh-key auth? accept a user/key spec from the caller?
+- [ ] auto-attach linters?

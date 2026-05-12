@@ -136,6 +136,13 @@ let
           gopls.enable = true;
           nil_ls.enable = true;
           pyright.enable = true;
+          rust_analyzer = {
+            enable = true;
+            # rustc & cargo come from the rust language kit, on PATH. tell
+            # nixvim not to bring its own copies into the closure.
+            installCargo = false;
+            installRustc = false;
+          };
           ts_ls.enable = true;
         };
       };
@@ -162,6 +169,7 @@ let
               "ruff_organize_imports"
               "ruff_format"
             ];
+            rust = [ "rustfmt" ];
             javascript = [ "prettier" ];
             typescript = [ "prettier" ];
             javascriptreact = [ "prettier" ];

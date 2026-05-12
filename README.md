@@ -14,6 +14,7 @@ see [`docs/DESIGN.md`](docs/DESIGN.md) for the shape of the project and the arch
 | go         | `go_1_26`, `gopls`, `delve`, `gotools` | `golangci-lint`, ...                    |
 | nix        | `nixfmt`, `nil`, `nix-tree`            | `statix`, `deadnix`, ...                |
 | python     | `python314`, `uv`, `pyright`, `ruff`   | `mypy`, `pytest`, project deps via uv, ... |
+| rust       | `rustc`, `cargo`, `rust-analyzer`, `rustfmt`, `clippy` | crates via cargo, `cargo-nextest`, ...     |
 
 ## consuming
 
