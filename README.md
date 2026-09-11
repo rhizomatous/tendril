@@ -18,53 +18,39 @@ see [`docs/DESIGN.md`](docs/DESIGN.md) for the shape of the project and the arch
 
 ## consuming
 
-### pin one language
+### nix
 
 ```nix
 {
   inputs.tendril.url = "github:rhizomatous/tendril";
   outputs = { self, nixpkgs, tendril, ... }: {
-    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.go;
+    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.default;
   };
 }
 ```
 
-each language ships as one full environment containing its toolchain, core
-tools, opencode, and the configured nvim. `polyglot` provides the same
-environment with every language bundled together, and `default` aliases it.
+tendril ships one environment containing every language toolchain, core tools,
+opencode, and the configured nvim.
 
-each environment is provided as a dev shell. but shells aren't the only target!
-each language also produces a docker image and a NixOS VM under
-`packages.<linux-sys>`:
+the environment is provided as a dev shell, a docker image, and a NixOS VM:
 
 ```bash
-nix build  github:rhizomatous/tendril#go         # docker image
-nix run    github:rhizomatous/tendril#vm-go      # boot a NixOS VM with the go env
+nix build  github:rhizomatous/tendril      # docker image
+nix run    github:rhizomatous/tendril#vm   # boot a NixOS VM
 ```
 
 ### editor agent
 
-the environments integrate opencode into nvim through
+the environment integrates opencode into nvim through
 [Sidekick.nvim](https://github.com/folke/sidekick.nvim). `<Space>aa` toggles
 opencode in a right-hand panel, `<C-.>` moves focus to or from it, and
 `<Space>a` shows the available context and prompt mappings through which-key.
-
-### one shell with everything
-
-```nix
-{
-  inputs.tendril.url = "github:rhizomatous/tendril";
-  outputs = { self, nixpkgs, tendril, ... }: {
-    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.polyglot;
-  };
-}
-```
 
 ### direnv
 
 ```bash
 # .envrc in the consumer repo
-use flake github:rhizomatous/tendril#typescript
+use flake github:rhizomatous/tendril
 ```
 
 ## platforms
@@ -78,5 +64,5 @@ direnv allow                          # auto-activates dev shell on cd
 lefthook install                      # one-time, wires .git/hooks/ to lefthook.yml
 nixfmt path/to/file.nix               # format (nixfmt on PATH via dev shell)
 nix flake check                       # evaluate all outputs
-nix develop .#go                      # standalone per-language shell
+nix develop                           # enter the full environment
 ```

@@ -2,7 +2,7 @@
 
 ## tendril's north star
 
-a polyglot cross-platform dev environment, distributed as a Nix flake. users pin `tendril` once to get standardized per-language dev shells and docker images from a single source of truth. this makes it easy to "grab-and-go" a batteries-included dev env for any supported language, anywhere you need it. tendril is easier to use than standing up a Nix config from scratch, allowing the user to gain the benefits of hermetic builds and environment standardization without the complexity of DIYing it.
+a polyglot cross-platform dev environment, distributed as a Nix flake. users pin `tendril` once to get a standardized dev shell and docker image from a single source of truth. this makes it easy to "grab-and-go" a batteries-included dev env with every supported language, anywhere you need it. tendril is easier to use than standing up a Nix config from scratch, allowing the user to gain the benefits of hermetic builds and environment standardization without the complexity of DIYing it.
 
 ## what tendril is (and isn't)
 
@@ -10,8 +10,8 @@ a polyglot cross-platform dev environment, distributed as a Nix flake. users pin
 
 - a Nix flake
 - a single source of truth for language toolchains (compiler, language server, debugger, formatter), core tools (CLI utils, git) an editor (nvim), and an agent (opencode), all composable.
-- per-language dev shells, plus polyglot shells that bundle every language at once.
-- matching docker images parallel to every shell.
+- one environment that bundles every supported language.
+- a matching docker image and NixOS VM.
 
 **isn't:**
 
@@ -41,26 +41,13 @@ tendril/
 
 an **environment** is a fully-functioning tendril derivation. each environment is constructed by feeding some **kits** into a **builder**.
 
-environments come in multiple languages, currently six*:
-- `go`
-- `nix`
-- `python`
-- `rust`
-- `typescript`
-- `polyglot` *(not really _a_ language, just all of the languages, but close 'nuff)
+tendril ships one environment containing core tools, every language toolchain,
+opencode, and the configured nvim.
 
-each language has one full environment containing core tools, its language
-toolchain, opencode, and the configured nvim. `polyglot` has the same shape but
-includes every language toolchain.
-
-each environment can be run in any of the execution contexts tendril supports. currently, that is:
+the environment can be run in any of the execution contexts tendril supports. currently, that is:
 - Nix dev shells
 - containers
 - NixOS VMs
-
-each environment is tagged with `TENDRIL_ENV=<name>` (e.g. `go`, `polyglot`, or
-`vm-go`) so any shell or script can introspect which tendril env it's sitting
-in.
 
 ## kits
 
@@ -85,7 +72,9 @@ kits are fully agnostic to which system they will run on, which builder will con
 
 ### languages
 
-languages are a slightly special type of kit. the core of tendril, after all, is to provide development environments! so every tendril environment includes at least one language, and there is bespoke logic to wire languages up to the rest of the build stuff.
+languages are a slightly special type of kit. each remains isolated in its own
+file so its toolchain stays easy to understand and update, while the environment
+composes all of them together.
 
 | language   | bundled                                | rationale                                                                  |
 | ---------- | -------------------------------------- | -------------------------------------------------------------------------- |
@@ -141,32 +130,27 @@ each builder maps the kit into its target's idiom:
 
 ## composition
 
-the flake evaluates the `core-tools`, `ide`, and `agent` kits once per system.
-each language environment is the direct composition:
+the flake evaluates every kit once per system. the environment is the direct
+composition:
 
 ```nix
-[ coreTools languageKit ide agent ]
+[ coreTools ] ++ languageKits ++ [ ide agent ]
 ```
 
-the polyglot environment replaces `languageKit` with all language kits. the
-same composed kit lists feed every execution context, keeping dev shells,
-containers, and VMs consistent without a matrix of optional features.
+the same composed kit list feeds every execution context, keeping the dev
+shell, container, and VM consistent.
 
 ## flake outputs
 
 ```
-devShells.<sys>.<lang>           # per-language shell
-devShells.<sys>.polyglot         # shell with every language
-devShells.<sys>.default          # alias for polyglot
-packages.<linux-sys>.<lang>      # docker image
-packages.<linux-sys>.polyglot    # polyglot docker image
-packages.<linux-sys>.vm-<lang>   # NixOS VM script
-packages.<linux-sys>.vm-polyglot # polyglot NixOS VM
-formatter.<sys>                  # nixfmt, so `nix fmt` works
+devShells.<sys>.default          # shell with every language
+packages.<linux-sys>.default    # docker image
+packages.<linux-sys>.vm         # NixOS VM script
+formatter.<sys>                 # nixfmt, so `nix fmt` works
 ```
 
-generation is mechanical. when a language is added, every output (shell,
-docker image, and VM) follows automatically.
+when a language kit is added to the registry, it flows automatically into the
+shell, docker image, and VM.
 
 ## platform support
 

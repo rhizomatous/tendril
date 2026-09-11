@@ -5,14 +5,13 @@
 # restricts itself to linux systems for this reason.
 #
 # returns the runnable VM script derivation (`.config.system.build.vm`).
-# users invoke via `nix run .#vm-<name>` or `nix build .#vm-<name>` then
-# run `./result/bin/run-tendril-<name>-vm`.
+# users invoke via `nix run .#vm` or `nix build .#vm`, then run
+# `./result/bin/run-tendril-vm`.
 
 { nixpkgs }:
 
 {
   pkgs,
-  name,
   kits ? [ ],
 }:
 let
@@ -25,7 +24,7 @@ let
   baseModule =
     { ... }:
     {
-      networking.hostName = "tendril-${name}";
+      networking.hostName = "tendril";
 
       # a default user so the console actually lets someone log in.
       # TODO: password-by-default is a placeholder for a throwaway dev VM.
