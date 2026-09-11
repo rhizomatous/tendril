@@ -1,10 +1,6 @@
-# the ide kit: the configured nvim derivation. composed into each
-# tendril shell & image that opts in by `mkComposer`.
-#
-# shape: `{ nixvim } -> { pkgs } -> kit`. takes nixvim once at lib-init
-# time, then `pkgs` per-system at composition time.
-#
-# the bulk of this file is `nixvimModule`: tendril's nvim configuration as
+# the ide kit, a configured nvim.
+
+# the bulk of this file is `nixvimModule`, tendril's nvim configuration as
 # a nixvim module. see https://nix-community.github.io/nixvim/ for option
 # docs.
 

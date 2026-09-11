@@ -24,29 +24,27 @@ see [`docs/DESIGN.md`](docs/DESIGN.md) for the shape of the project and the arch
 {
   inputs.tendril.url = "github:rhizomatous/tendril";
   outputs = { self, nixpkgs, tendril, ... }: {
-    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.go-ide;
+    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.go;
   };
 }
 ```
 
-each language ships in three flavours:
+each language ships as one full environment containing its toolchain, core
+tools, opencode, and the configured nvim. `polyglot` provides the same
+environment with every language bundled together, and `default` aliases it.
 
-- `<lang>-ci` — base: language tools only
-- `<lang>-agent` — base + opencode (the agent)
-- `<lang>-ide` — everything: language tools + opencode + nvim (the ide)
-
-`polyglot-{ci,agent,ide}` follows the same pattern, with every language bundled together. `default` aliases `polyglot-ide`.
-
-each flavour is provided as a dev shell. but shells aren't the only target! each language and flavour also produces a docker image and a NixOS VM under `packages.<linux-sys>`:
+each environment is provided as a dev shell. but shells aren't the only target!
+each language also produces a docker image and a NixOS VM under
+`packages.<linux-sys>`:
 
 ```bash
-nix build  github:rhizomatous/tendril#go-ci         # docker image
-nix run    github:rhizomatous/tendril#vm-go-ide     # boot a NixOS VM with the go env
+nix build  github:rhizomatous/tendril#go         # docker image
+nix run    github:rhizomatous/tendril#vm-go      # boot a NixOS VM with the go env
 ```
 
 ### editor agent
 
-the `*-ide` environments integrate opencode into nvim through
+the environments integrate opencode into nvim through
 [Sidekick.nvim](https://github.com/folke/sidekick.nvim). `<Space>aa` toggles
 opencode in a right-hand panel, `<C-.>` moves focus to or from it, and
 `<Space>a` shows the available context and prompt mappings through which-key.
@@ -57,7 +55,7 @@ opencode in a right-hand panel, `<C-.>` moves focus to or from it, and
 {
   inputs.tendril.url = "github:rhizomatous/tendril";
   outputs = { self, nixpkgs, tendril, ... }: {
-    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.polyglot-ide;
+    devShells.aarch64-darwin.default = tendril.devShells.aarch64-darwin.polyglot;
   };
 }
 ```
@@ -66,7 +64,7 @@ opencode in a right-hand panel, `<C-.>` moves focus to or from it, and
 
 ```bash
 # .envrc in the consumer repo
-use flake github:rhizomatous/tendril#typescript-ide
+use flake github:rhizomatous/tendril#typescript
 ```
 
 ## platforms
@@ -80,5 +78,5 @@ direnv allow                          # auto-activates dev shell on cd
 lefthook install                      # one-time, wires .git/hooks/ to lefthook.yml
 nixfmt path/to/file.nix               # format (nixfmt on PATH via dev shell)
 nix flake check                       # evaluate all outputs
-nix develop .#go-ide                  # standalone per-language shell
+nix develop .#go                      # standalone per-language shell
 ```

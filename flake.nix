@@ -4,13 +4,13 @@
 # consumers pin a single input:
 #   inputs.tendril.url = "github:rhizomatous/tendril";
 # and reach everything via:
-#   tendril.devShells.<sys>.<lang>-{ci,agent,ide}            (base | base+opencode | everything)
-#   tendril.devShells.<sys>.polyglot-{ci,agent,ide}          (every language at once, three flavours)
-#   tendril.devShells.<sys>.default                          (alias for polyglot-ide)
-#   tendril.packages.<linux-sys>.<lang>-{ci,agent,ide}       (pre-built docker images, named `tendril-<lang>-<flavour>`)
-#   tendril.packages.<linux-sys>.polyglot-{ci,agent,ide}     (polyglot docker images, named `tendril-polyglot-<flavour>`)
-#   tendril.packages.<linux-sys>.vm-<lang>-{ci,agent,ide}    (runnable NixOS VM scripts, hostname `tendril-vm-<lang>-<flavour>`)
-#   tendril.packages.<linux-sys>.vm-polyglot-{ci,agent,ide}  (polyglot NixOS VMs)
+#   tendril.devShells.<sys>.<lang>             (dev shell for a language)
+#   tendril.devShells.<sys>.polyglot           (every language at once)
+#   tendril.devShells.<sys>.default            (alias for polyglot)
+#   tendril.packages.<linux-sys>.<lang>        (docker image named `tendril-<lang>`)
+#   tendril.packages.<linux-sys>.polyglot      (polyglot docker image)
+#   tendril.packages.<linux-sys>.vm-<lang>     (runnable NixOS VM script)
+#   tendril.packages.<linux-sys>.vm-polyglot   (polyglot NixOS VM)
 #
 # also activated by the repo's own `.envrc` for working on tendril itself.
 {
@@ -19,8 +19,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # nixvim, the declarative neovim config framework. used by `nix/kits/ide.nix`
-    # to construct the editor that's composed into ide-flavoured shells.
+    # nixvim, the declarative neovim config framework. used by `nix/kits/ide.nix`.
     nixvim = {
       url = "github:nix-community/nixvim";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -36,7 +35,11 @@
     let
       # helpers
       forAllSystems = import ./nix/utils/forAllSystems.nix { inherit nixpkgs; };
-      mkComposer = import ./nix/utils/mkComposer.nix { inherit nixvim; };
+
+      # cross-cutting kit factories
+      coreToolsKit = import ./nix/kits/core-tools.nix;
+      ideKit = import ./nix/kits/ide.nix { inherit nixvim; };
+      agentKit = import ./nix/kits/agent.nix;
 
       # builders
       mkShell = import ./nix/builders/mkShell.nix;
@@ -60,54 +63,27 @@
         typescript = import ./nix/kits/languages/typescript.nix;
       };
 
-      # per-system, evaluate every language kit and resolve the
-      # cross-cutting kits once (via `mkComposer`). returns a flat attrset
-      # keyed by output name, where each value is the kit list for that
-      # output. three flavours per language, plus the polyglot variants:
-      #   <lang>-ci       core + lang                (base only)
-      #   <lang>-agent    core + lang + agent        (base + opencode)
-      #   <lang>-ide      core + lang + ide + agent  (everything)
-      #   polyglot-...    polyglot variants of the above
+      # Per-system, evaluate each kit once and return one full environment per
+      # language plus the polyglot environment. Every environment contains
+      # core tools, its language kit(s), the configured editor, and opencode.
       kitsFor =
         pkgs:
         let
-          composer = mkComposer pkgs;
+          coreTools = coreToolsKit { inherit pkgs; };
+          ide = ideKit { inherit pkgs; };
+          agent = agentKit { inherit pkgs; };
           languageKits = builtins.mapAttrs (_: mkKit: mkKit { inherit pkgs; }) languages;
           langs = builtins.attrValues languageKits;
-          # render one flavour across every language (plus the polyglot variant).
-          flavour =
-            {
-              suffix,
-              withIde,
-              withAgent,
-            }:
-            let
-              composeWith = langKits: composer.compose { inherit langKits withIde withAgent; };
-              perLanguage = nixpkgs.lib.mapAttrs' (name: lk: {
-                name = "${name}${suffix}";
-                value = composeWith [ lk ];
-              }) languageKits;
-              polyglot = {
-                "polyglot${suffix}" = composeWith langs;
-              };
-            in
-            perLanguage // polyglot;
+          compose =
+            langKits:
+            [ coreTools ]
+            ++ langKits
+            ++ [
+              ide
+              agent
+            ];
         in
-        flavour {
-          suffix = "-ci";
-          withIde = false;
-          withAgent = false;
-        }
-        // flavour {
-          suffix = "-agent";
-          withIde = false;
-          withAgent = true;
-        }
-        // flavour {
-          suffix = "-ide";
-          withIde = true;
-          withAgent = true;
-        };
+        builtins.mapAttrs (_: langKit: compose [ langKit ]) languageKits // { polyglot = compose langs; };
 
       # produce the per-language outputs keyed by system. `build` is called
       # as `build { pkgs, name, kits }` for each entry; callers ignore
@@ -146,8 +122,8 @@
         );
     in
     {
-      # for each supported system, one named shell per language flavour plus
-      # the polyglot variants. `default` aliases the full polyglot-ide shell.
+      # For each supported system, one named shell per language plus polyglot.
+      # `default` aliases the polyglot shell.
       devShells =
         let
           base = mkPerLanguageOutputs {
@@ -161,7 +137,7 @@
               mkShell { inherit pkgs kits; };
           };
         in
-        builtins.mapAttrs (_: shells: shells // { default = shells.polyglot-ide; }) base;
+        builtins.mapAttrs (_: shells: shells // { default = shells.polyglot; }) base;
 
       # docker images and NixOS VMs parallel to the dev shells.
       # linux only, see `linuxSystems` above for why.

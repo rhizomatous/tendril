@@ -49,17 +49,18 @@ environments come in multiple languages, currently six*:
 - `typescript`
 - `polyglot` *(not really _a_ language, just all of the languages, but close 'nuff)
 
-each language comes in three flavours:
-- `<lang>-ci`: language tools only. the base. small enough to be useful in CI.
-- `<lang>-agent`: base & opencode. for running an agent in a sandbox.
-- `<lang>-ide`: base & opencode & nvim. for interactive dev.
+each language has one full environment containing core tools, its language
+toolchain, opencode, and the configured nvim. `polyglot` has the same shape but
+includes every language toolchain.
 
-each flavour can be run in any of the execution contexts tendril supports. currently, that is:
+each environment can be run in any of the execution contexts tendril supports. currently, that is:
 - Nix dev shells
 - containers
 - NixOS VMs
 
-each environment is tagged with `TENDRIL_ENV=<name>` (e.g. `go-ide`, `polyglot-ci`) so any shell or script can introspect which tendril env it's sitting in.
+each environment is tagged with `TENDRIL_ENV=<name>` (e.g. `go`, `polyglot`, or
+`vm-go`) so any shell or script can introspect which tendril env it's sitting
+in.
 
 ## kits
 
@@ -140,30 +141,32 @@ each builder maps the kit into its target's idiom:
 
 ## composition
 
-tendril has many kits (e.g `ide`, `agent`, `core-tools`) that are cross-cutting and layered together with other kits. that layering lives in [`mkComposer`](../nix/utils/mkComposer.nix), which takes `pkgs`, evaluates the cross-cutting kits once, and returns:
+the flake evaluates the `core-tools`, `ide`, and `agent` kits once per system.
+each language environment is the direct composition:
 
 ```nix
-{ coreTools; ide; agent; compose = { langKit, withIde, withAgent } -> [kits]; }
+[ coreTools languageKit ide agent ]
 ```
 
-this is useful so that we can instantiate consistent tendril environments for different execution contexts. for example, each of a dev env, a CI runner vm, and an agent in a container, should be equally possible to stand up with tendril from the same template.
-
-`compose` is the function that actually constructs environments. it should be called for each language and each desired configuration. optional kits are included as parameters, such as `withAgent`. this allows the construction of the three flavours of tendril environment.
+the polyglot environment replaces `languageKit` with all language kits. the
+same composed kit lists feed every execution context, keeping dev shells,
+containers, and VMs consistent without a matrix of optional features.
 
 ## flake outputs
 
 ```
-devShells.<sys>.<lang>-{ci,agent,ide}            # per-language shells, three flavours
-devShells.<sys>.polyglot-{ci,agent,ide}          # polyglot shells, same three flavours
-devShells.<sys>.default                          # alias for polyglot-ide
-packages.<linux-sys>.<lang>-{ci,agent,ide}       # docker images
-packages.<linux-sys>.polyglot-{ci,agent,ide}     # polyglot docker images
-packages.<linux-sys>.vm-<lang>-{ci,agent,ide}    # NixOS VM scripts
-packages.<linux-sys>.vm-polyglot-{ci,agent,ide}  # polyglot NixOS VMs
-formatter.<sys>                                  # nixfmt, so `nix fmt` works
+devShells.<sys>.<lang>           # per-language shell
+devShells.<sys>.polyglot         # shell with every language
+devShells.<sys>.default          # alias for polyglot
+packages.<linux-sys>.<lang>      # docker image
+packages.<linux-sys>.polyglot    # polyglot docker image
+packages.<linux-sys>.vm-<lang>   # NixOS VM script
+packages.<linux-sys>.vm-polyglot # polyglot NixOS VM
+formatter.<sys>                  # nixfmt, so `nix fmt` works
 ```
 
-generation is mechanical. when a language is added, every flavour and every output (shell, docker, lib) follows automatically.
+generation is mechanical. when a language is added, every output (shell,
+docker image, and VM) follows automatically.
 
 ## platform support
 
