@@ -44,6 +44,13 @@ nix build  github:rhizomatous/tendril#go-ci         # docker image
 nix run    github:rhizomatous/tendril#vm-go-ide     # boot a NixOS VM with the go env
 ```
 
+### editor agent
+
+the `*-ide` environments integrate opencode into nvim through
+[Sidekick.nvim](https://github.com/folke/sidekick.nvim). `<Space>aa` toggles
+opencode in a right-hand panel, `<C-.>` moves focus to or from it, and
+`<Space>a` shows the available context and prompt mappings through which-key.
+
 ### one shell with everything
 
 ```nix

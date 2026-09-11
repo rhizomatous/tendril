@@ -12,10 +12,34 @@
 
 { pkgs }:
 let
+  # nixpkgs treats the unfree Copilot LSP as an unconditional runtime dependency of
+  # Sidekick. We don't want that.
+  sidekick = pkgs.vimPlugins.sidekick-nvim.overrideAttrs (_: {
+    runtimeDeps = [ ];
+  });
+
   nixvimModule = {
     colorschemes.dracula.enable = true;
 
     globals.mapleader = " ";
+
+    # The pinned nixvim Sidekick module incorrectly checks
+    # `settings.opts.nes.enabled`, but Sidekick expects `nes.enabled` at the
+    # top level. So we have to register and configure it directly.
+    extraPlugins = [ sidekick ];
+    extraConfigLua = ''
+      require("sidekick").setup({
+        -- Next-edit suggestions require Copilot; tendril uses Sidekick only
+        -- for its AI CLI integration.
+        nes = { enabled = false },
+        cli = {
+          win = {
+            layout = "right",
+            split = { width = 72 },
+          },
+        },
+      })
+    '';
 
     opts = {
       number = true;
@@ -82,7 +106,7 @@ let
             ];
             # snacks's default dashboard includes a `startup` section with
             # `require('lazy.stats')`, which fails because we're nix-managed
-            # not lazy.nvim. providing explicit sections drops that one.
+            # not lazy.nvim. so, drop that one.
             sections = [
               { section = "header"; }
               {
@@ -212,6 +236,67 @@ let
         key = ";b";
         action = ":lua Snacks.picker.buffers()<CR>";
         options.desc = "buffers";
+      }
+
+      # sidekick / opencode
+      {
+        mode = [
+          "n"
+          "t"
+          "i"
+          "x"
+        ];
+        key = "<C-.>";
+        action.__raw = ''function() require("sidekick.cli").focus() end'';
+        options.desc = "focus sidekick";
+      }
+      {
+        mode = "n";
+        key = "<leader>aa";
+        action.__raw = ''function() require("sidekick.cli").toggle({ name = "opencode", focus = true }) end'';
+        options.desc = "toggle opencode";
+      }
+      {
+        mode = "n";
+        key = "<leader>as";
+        action.__raw = ''function() require("sidekick.cli").select({ filter = { installed = true } }) end'';
+        options.desc = "select AI CLI";
+      }
+      {
+        mode = "n";
+        key = "<leader>ad";
+        action.__raw = ''function() require("sidekick.cli").close() end'';
+        options.desc = "detach AI CLI session";
+      }
+      {
+        mode = [
+          "n"
+          "x"
+        ];
+        key = "<leader>at";
+        action.__raw = ''function() require("sidekick.cli").send({ msg = "{this}" }) end'';
+        options.desc = "send this to AI CLI";
+      }
+      {
+        mode = "n";
+        key = "<leader>af";
+        action.__raw = ''function() require("sidekick.cli").send({ msg = "{file}" }) end'';
+        options.desc = "send file to AI CLI";
+      }
+      {
+        mode = "x";
+        key = "<leader>av";
+        action.__raw = ''function() require("sidekick.cli").send({ msg = "{selection}" }) end'';
+        options.desc = "send selection to AI CLI";
+      }
+      {
+        mode = [
+          "n"
+          "x"
+        ];
+        key = "<leader>ap";
+        action.__raw = ''function() require("sidekick.cli").prompt() end'';
+        options.desc = "select AI prompt";
       }
 
       # bufferline cycling.

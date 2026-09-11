@@ -2,7 +2,6 @@
 - [ ] build a setup/launcher util. set up Nix and any other prereqs? provide scaffold commands for projects? install script?
 - [ ] shellHook is silently dropped by mkDockerImage - should that be fixed somehow?
 - [ ] nothing tests mergeKits / mkShell directly, could be nice
-- [ ] opencode -> vim integration
 - [ ] custom splashscreen in nvim?
 - [ ] do i need to think about the Nix module system
 - [ ] mkNixosVm uses a default `tendril:tendril` user with initialPassword. not great long-term. swap to ssh-key auth? accept a user/key spec from the caller?

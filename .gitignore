@@ -12,3 +12,4 @@ result-*
 *.swo
 .idea/
 .vscode/
+.claude/
