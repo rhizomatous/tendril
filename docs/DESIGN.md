@@ -10,7 +10,8 @@ a polyglot cross-platform dev environment, distributed as a Nix flake. users pin
 
 - a Nix flake
 - a single source of truth for language toolchains (compiler, language server, debugger, formatter), core tools (CLI utils, git) an editor (nvim), and an agent (opencode), all composable.
-- one environment that bundles every supported language.
+- a base environment that bundles every supported language.
+- an additive local-AI dev shell with Ollama and small coding models.
 - a matching docker image and NixOS VM.
 
 **isn't:**
@@ -27,6 +28,7 @@ tendril/
     ├── kits/               # single source of truth for all packages
     │   ├── core-tools.nix  # basic CLI tools (shell fundamentals, git, lefthook, modern unix utilities)
     │   ├── agent.nix       # AI agent tools (opencode)
+    │   ├── ollama.nix      # optional local-AI service, models, and OpenCode wiring
     │   ├── ide.nix         # editor tools (nvim & its config)
     │   └── languages/      # per-language toolchains
     │       ├── go.nix
@@ -41,13 +43,18 @@ tendril/
 
 an **environment** is a fully-functioning tendril derivation. each environment is constructed by feeding some **kits** into a **builder**.
 
-tendril ships one environment containing core tools, every language toolchain,
-opencode, and the configured nvim.
+tendril's base environment contains core tools, every language toolchain,
+opencode, and the configured nvim. the `ollama` dev-shell variant adds the
+local-AI kit to that complete base; it is not a reduced or standalone shell.
 
 the environment can be run in any of the execution contexts tendril supports. currently, that is:
 - Nix dev shells
 - containers
 - NixOS VMs
+
+the Ollama variant is intentionally dev-shell-only. local model state and
+long-running inference services do not fit the reproducible container and VM
+outputs, which continue to use exactly the base kit list.
 
 ## kits
 
@@ -110,6 +117,19 @@ the `ide` kit is a preconfigured batteries-included neovim. users don't _need_ t
 
 lspconfig is set up with auto-attach for for all languages tendril knows about. lsp servers will autoattach when their binary is on PATH. this means you can, if for some reason you need to, attach an LSP than is not installed via Nix.
 
+### local AI
+
+the optional `ollama` kit installs Ollama, starts its API server on shell entry,
+and ensures the small `qwen3.5:0.8b`, `qwen3.5:2b`, and `qwen3.5:4b` models are
+present. its inline OpenCode configuration deep-merges with the user's config,
+points the existing agent and Sidekick.nvim integration at the local API, and
+selects the 4B model by default.
+
+the kit limits context to 32k, concurrent requests to one, and loaded models to
+one. these trade some maximum agentic context for a useful setup on a small
+machine. model weights remain runtime state in Ollama's user data directory;
+they are deliberately not Nix store paths.
+
 ## builders
 
 a **builder** is a functions `[ kits ] -> derivation` that construct a tendril environment with the given set of kits.
@@ -137,13 +157,19 @@ composition:
 [ coreTools ] ++ languageKits ++ [ ide agent ]
 ```
 
-the same composed kit list feeds every execution context, keeping the dev
-shell, container, and VM consistent.
+the same base kit list feeds every execution context, keeping the default dev
+shell, container, and VM consistent. the local-AI shell is the single additive
+composition:
+
+```nix
+baseKits ++ [ ollama ]
+```
 
 ## flake outputs
 
 ```
 devShells.<sys>.default          # shell with every language
+devShells.<sys>.ollama           # default shell plus local AI
 packages.<linux-sys>.default    # docker image
 packages.<linux-sys>.vm         # NixOS VM script
 formatter.<sys>                 # nixfmt, so `nix fmt` works

@@ -29,8 +29,9 @@ see [`docs/DESIGN.md`](docs/DESIGN.md) for the shape of the project and the arch
 }
 ```
 
-tendril ships one environment containing every language toolchain, core tools,
-opencode, and the configured nvim.
+tendril's base environment contains every language toolchain, core tools,
+opencode, and the configured nvim. an optional local-AI dev shell adds Ollama
+without changing the container or VM.
 
 the environment is provided as a dev shell, a docker image, and a NixOS VM:
 
@@ -45,6 +46,25 @@ the environment integrates opencode into nvim through
 [Sidekick.nvim](https://github.com/folke/sidekick.nvim). `<Space>aa` toggles
 opencode in a right-hand panel, `<C-.>` moves focus to or from it, and
 `<Space>a` shows the available context and prompt mappings through which-key.
+
+### local AI
+
+the `ollama` dev shell contains everything in the default shell and adds a
+ready-to-use local OpenCode backend:
+
+```bash
+nix develop github:rhizomatous/tendril#ollama
+```
+
+on entry, tendril starts Ollama if necessary and pulls any missing models from
+the small Qwen 3.5 set: `0.8b`, `2b`, and `4b` (roughly 7 GB in total).
+OpenCode—and therefore Sidekick.nvim—defaults to `qwen3.5:4b`, with `0.8b` for
+lightweight tasks. memory-conscious defaults keep one model loaded, process one
+request at a time, and use a 32k context window.
+
+model data is stored in Ollama's normal user data directory, outside the Nix
+store, so subsequent shell entries reuse it. set `TENDRIL_OLLAMA_SKIP_SETUP=1`
+to skip startup and downloads; run `tendril-ollama-setup` later to finish them.
 
 ### direnv
 
@@ -65,4 +85,5 @@ lefthook install                      # one-time, wires .git/hooks/ to lefthook.
 nixfmt path/to/file.nix               # format (nixfmt on PATH via dev shell)
 nix flake check                       # evaluate all outputs
 nix develop                           # enter the full environment
+nix develop .#ollama                  # full environment plus local AI
 ```

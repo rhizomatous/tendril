@@ -4,7 +4,8 @@
 # consumers pin a single input:
 #   inputs.tendril.url = "github:rhizomatous/tendril";
 # and reach everything via:
-#   tendril.devShells.<sys>.default       (polyglot devshell)
+#   tendril.devShells.<sys>.default       (polyglot dev shell)
+#   tendril.devShells.<sys>.ollama        (dev shell plus local AI)
 #   tendril.packages.<linux-sys>.default  (docker image)
 #   tendril.packages.<linux-sys>.vm       (runnable NixOS VM)
 #
@@ -36,6 +37,7 @@
       coreToolsKit = import ./nix/kits/core-tools.nix;
       ideKit = import ./nix/kits/ide.nix { inherit nixvim; };
       agentKit = import ./nix/kits/agent.nix;
+      ollamaKit = import ./nix/kits/ollama.nix;
 
       # builders
       mkShell = import ./nix/builders/mkShell.nix;
@@ -73,11 +75,16 @@
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
+          kits = kitsFor pkgs;
         in
         {
           default = mkShell {
+            inherit pkgs kits;
+          };
+
+          ollama = mkShell {
             inherit pkgs;
-            kits = kitsFor pkgs;
+            kits = kits ++ [ (ollamaKit { inherit pkgs; }) ];
           };
         }
       );
