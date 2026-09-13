@@ -325,7 +325,7 @@ let
     ];
   };
 
-  nvim = nixvim.legacyPackages.${pkgs.system}.makeNixvimWithModule {
+  nvim = nixvim.legacyPackages.${pkgs.stdenv.hostPlatform.system}.makeNixvimWithModule {
     inherit pkgs;
     module = nixvimModule;
   };

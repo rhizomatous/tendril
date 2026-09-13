@@ -7,5 +7,3 @@
 - [ ] auto-attach linters?
 - [ ] investigate using nixos-generators? maybe could output vm images for stuff like AWS images
 - [ ] investigate nix2container?
-- [ ] evaluation warning: 'system' has been renamed to/replaced by 'stdenv.hostPlatform.system'
-- [ ] ollama config, improve the UX?
