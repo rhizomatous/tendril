@@ -119,11 +119,12 @@ lspconfig is set up with auto-attach for for all languages tendril knows about. 
 
 ### local AI
 
-the optional `ollama` kit installs Ollama, starts its API server on shell entry,
-and ensures the small `qwen3.5:0.8b`, `qwen3.5:2b`, and `qwen3.5:4b` models are
-present. its inline OpenCode configuration deep-merges with the user's config,
-points the existing agent and Sidekick.nvim integration at the local API, and
-selects the 4B model by default.
+the optional `ollama` kit installs Ollama and starts its API server on shell
+entry. it never downloads model weights automatically: when Ollama's model
+store is empty, the startup helper prints commands for the small
+`qwen3.5:0.8b`, `qwen3.5:2b`, and `qwen3.5:4b` options. its inline OpenCode
+configuration deep-merges with the user's config, points the existing agent and
+Sidekick.nvim integration at the local API, and selects the 4B model by default.
 
 the kit limits context to 32k, concurrent requests to one, and loaded models to
 one. these trade some maximum agentic context for a useful setup on a small

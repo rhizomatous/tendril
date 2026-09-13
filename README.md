@@ -56,15 +56,17 @@ ready-to-use local OpenCode backend:
 nix develop github:rhizomatous/tendril#ollama
 ```
 
-on entry, tendril starts Ollama if necessary and pulls any missing models from
-the small Qwen 3.5 set: `0.8b`, `2b`, and `4b` (roughly 7 GB in total).
-OpenCode—and therefore Sidekick.nvim—defaults to `qwen3.5:4b`, with `0.8b` for
-lightweight tasks. memory-conscious defaults keep one model loaded, process one
-request at a time, and use a 32k context window.
+on entry, tendril starts Ollama if necessary. it does not download models; when
+none are installed, it prints commands for pulling whichever Qwen 3.5 size fits
+the machine: `0.8b`, `2b`, or `4b`. OpenCode—and therefore Sidekick.nvim—defaults
+to `qwen3.5:4b`, with `0.8b` for lightweight tasks. memory-conscious defaults
+keep one model loaded, process one request at a time, and use a 32k context
+window.
 
 model data is stored in Ollama's normal user data directory, outside the Nix
-store, so subsequent shell entries reuse it. set `TENDRIL_OLLAMA_SKIP_SETUP=1`
-to skip startup and downloads; run `tendril-ollama-setup` later to finish them.
+store, so shell entry stays fast and existing downloads are reused. set
+`TENDRIL_OLLAMA_SKIP_START=1` to skip automatic server startup; run
+`tendril-ollama-start` later to start it and check model availability.
 
 ### direnv
 

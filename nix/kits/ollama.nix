@@ -15,8 +15,6 @@ let
     }
   ];
 
-  modelIds = map (model: model.id) models;
-
   opencodeModels = builtins.listToAttrs (
     map (model: {
       name = model.id;
@@ -37,59 +35,38 @@ let
       pkgs.ollama
     ];
     text = ''
-      if ollama list >/dev/null 2>&1; then
-        exit 0
+      if ! ollama list >/dev/null 2>&1; then
+        state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/tendril"
+        log_file="$state_dir/ollama.log"
+        mkdir -p "$state_dir"
+
+        echo "Starting Ollama (log: $log_file)..."
+        nohup ollama serve >>"$log_file" 2>&1 &
+
+        ready=0
+        for _ in $(seq 1 60); do
+          if ollama list >/dev/null 2>&1; then
+            ready=1
+            break
+          fi
+          sleep 0.25
+        done
+
+        if [ "$ready" -ne 1 ]; then
+          echo "Ollama did not become ready; see $log_file." >&2
+          exit 1
+        fi
+
+        echo "Ollama is ready."
       fi
 
-      state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/tendril"
-      log_file="$state_dir/ollama.log"
-      mkdir -p "$state_dir"
-
-      echo "Starting Ollama (log: $log_file)..."
-      nohup ollama serve >>"$log_file" 2>&1 &
-
-      for _ in $(seq 1 60); do
-        if ollama list >/dev/null 2>&1; then
-          echo "Ollama is ready."
-          exit 0
-        fi
-        sleep 0.25
-      done
-
-      echo "Ollama did not become ready; see $log_file." >&2
-      exit 1
-    '';
-  };
-
-  setupOllama = pkgs.writeShellApplication {
-    name = "tendril-ollama-setup";
-    runtimeInputs = [
-      pkgs.ollama
-      startOllama
-    ];
-    text = ''
-      if ! tendril-ollama-start; then
-        echo "Skipping model setup because Ollama is unavailable." >&2
-        exit 0
-      fi
-
-      pull_failed=0
-      for model in ${pkgs.lib.escapeShellArgs modelIds}; do
-        if ollama show "$model" >/dev/null 2>&1; then
-          continue
-        fi
-
-        echo "Pulling $model..."
-        if ! ollama pull "$model"; then
-          echo "Could not pull $model; run 'tendril-ollama-setup' to retry." >&2
-          pull_failed=1
-        fi
-      done
-
-      if [ "$pull_failed" -ne 0 ]; then
-        echo "The shell is available, but one or more local models are missing." >&2
-      else
-        echo "Local AI models are ready."
+      if [ -z "$(ollama list | tail -n +2 | head -n 1)" ]; then
+        cat >&2 <<'EOF'
+      No Ollama models are installed yet. Pull whichever size suits this machine:
+        ollama pull qwen3.5:0.8b  # tiniest
+        ollama pull qwen3.5:2b    # small
+        ollama pull qwen3.5:4b    # recommended
+      EOF
       fi
     '';
   };
@@ -98,7 +75,6 @@ in
   packages = [
     pkgs.ollama
     startOllama
-    setupOllama
   ];
 
   env = {
@@ -119,12 +95,12 @@ in
   };
 
   shellHook = ''
-    if [ "''${TENDRIL_OLLAMA_SKIP_SETUP:-0}" = "1" ]; then
-      echo "Skipping automatic Ollama setup."
+    if [ "''${TENDRIL_OLLAMA_SKIP_START:-0}" = "1" ]; then
+      echo "Skipping automatic Ollama startup."
     else
-      tendril-ollama-setup
+      tendril-ollama-start
     fi
 
-    echo "Local AI: opencode uses qwen3.5:4b; run 'ollama list' to see all models."
+    echo "Local AI: OpenCode defaults to qwen3.5:4b; run 'ollama list' to see installed models."
   '';
 }
