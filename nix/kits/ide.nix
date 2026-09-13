@@ -162,6 +162,10 @@ let
           gopls.enable = true;
           nil_ls.enable = true;
           pyright.enable = true;
+          ruff = {
+            enable = true;
+            package = null;
+          };
           rust_analyzer = {
             enable = true;
             # rustc & cargo come from the rust language kit, on PATH. tell

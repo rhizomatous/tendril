@@ -88,7 +88,7 @@ composes all of them together.
 | typescript | `nodejs_24`, `typescript-language-server`, `vscode-langservers-extracted` | node 24 LTS through apr 2028. |
 | go         | `go_1_26`, `gopls`, `delve`, `gotools` | lsp/debugger expected on PATH; `GOTOOLCHAIN=local` blocks silent toolchain downloads. |
 | nix        | `nixfmt`, `nil`, `nix-tree`            | RFC 166 formatter; lsp; closure inspector for debugging.                   |
-| python     | `python314`, `uv`, `pyright`, `ruff`   | uv for env/dep management; pyright for lsp; ruff for format.               |
+| python     | `python314`, `uv`, `pyright`, `ruff`   | uv for env/dep management; Pyright for types; Ruff for formatting and lint diagnostics. |
 | rust       | `rustc`, `cargo`, `rust-analyzer`, `rustfmt`, `clippy` | standard rust-lang toolchain, matching `rustup`'s default install. |
 
 what's *not* bundled: things like `eslint`, `prettier`, `vitest`, `golangci-lint`, `statix`, `deadnix`. those are pinnable per-project (in `package.json`, `go.mod`'s `tool` directive, etc.) and don't belong in a shared base.
@@ -120,6 +120,11 @@ lspconfig is set up with auto-attach for for all languages tendril knows about. 
 rust-analyzer uses the Rust kit's Clippy command for save-time checking instead
 of plain `cargo check`. lint levels and options remain controlled by each
 project through `Cargo.toml`, `clippy.toml`, and source attributes.
+
+Python uses Pyright and Ruff as complementary language servers. Pyright handles
+type analysis, while Ruff publishes lint diagnostics using the project's
+`pyproject.toml`, `ruff.toml`, or `.ruff.toml`; Conform remains responsible for
+format-on-save.
 
 ### local AI
 
