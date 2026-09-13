@@ -47,6 +47,10 @@ the environment integrates opencode into nvim through
 opencode in a right-hand panel, `<C-.>` moves focus to or from it, and
 `<Space>a` shows the available context and prompt mappings through which-key.
 
+for javascript and typescript projects, nvim also auto-attaches an ESLint
+language server when it finds an ESLint configuration. the server uses the
+project's own `eslint`, plugins, and rules rather than bundling them globally.
+
 ### local AI
 
 the `ollama` dev shell contains everything in the default shell and adds a

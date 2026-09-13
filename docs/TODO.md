@@ -4,6 +4,6 @@
 - [ ] nothing tests mergeKits / mkShell directly, could be nice
 - [ ] custom splashscreen in nvim?
 - [ ] mkNixosVm uses a default `tendril:tendril` user with initialPassword. not great long-term. swap to ssh-key auth? accept a user/key spec from the caller?
-- [ ] auto-attach linters?
+- [ ] auto-attach project linters for go, nix, python, and rust?
 - [ ] investigate using nixos-generators? maybe could output vm images for stuff like AWS images
 - [ ] investigate nix2container?

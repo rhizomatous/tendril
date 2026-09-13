@@ -153,6 +153,12 @@ let
       lsp = {
         enable = true;
         servers = {
+          # The server is supplied by the TypeScript kit, but resolves ESLint,
+          # plugins, and configuration from each project.
+          eslint = {
+            enable = true;
+            package = null;
+          };
           gopls.enable = true;
           nil_ls.enable = true;
           pyright.enable = true;

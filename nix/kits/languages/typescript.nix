@@ -11,11 +11,10 @@
 {
   # tools globally available on PATH inside the shell.
   # node 24 LTS, with npm and corepack bundled.
-  # `typescript-language-server` is here so nvim's lsp config (`ts_ls`) finds
-  # a binary to attach to. project-specific tools (typescript, eslint,
-  # prettier, vitest, ...) live in the consumer's `package.json`.
+  # Language-server binaries live here so nvim can attach to them.
   packages = with pkgs; [
     nodejs_24
     typescript-language-server
+    vscode-langservers-extracted
   ];
 }

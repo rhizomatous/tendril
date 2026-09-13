@@ -85,7 +85,7 @@ composes all of them together.
 
 | language   | bundled                                | rationale                                                                  |
 | ---------- | -------------------------------------- | -------------------------------------------------------------------------- |
-| typescript | `nodejs_24`, `typescript-language-server` | node 24 LTS through apr 2028. lsp on PATH so nvim's `ts_ls` finds it.   |
+| typescript | `nodejs_24`, `typescript-language-server`, `vscode-langservers-extracted` | node 24 LTS through apr 2028. |
 | go         | `go_1_26`, `gopls`, `delve`, `gotools` | lsp/debugger expected on PATH; `GOTOOLCHAIN=local` blocks silent toolchain downloads. |
 | nix        | `nixfmt`, `nil`, `nix-tree`            | RFC 166 formatter; lsp; closure inspector for debugging.                   |
 | python     | `python314`, `uv`, `pyright`, `ruff`   | uv for env/dep management; pyright for lsp; ruff for format.               |
