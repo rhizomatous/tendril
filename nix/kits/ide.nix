@@ -168,6 +168,9 @@ let
             # nixvim not to bring its own copies into the closure.
             installCargo = false;
             installRustc = false;
+
+            # Use the bundled Clippy for save-time checking.
+            settings.check.command = "clippy";
           };
           ts_ls.enable = true;
         };

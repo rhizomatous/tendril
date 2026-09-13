@@ -89,7 +89,7 @@ composes all of them together.
 | go         | `go_1_26`, `gopls`, `delve`, `gotools` | lsp/debugger expected on PATH; `GOTOOLCHAIN=local` blocks silent toolchain downloads. |
 | nix        | `nixfmt`, `nil`, `nix-tree`            | RFC 166 formatter; lsp; closure inspector for debugging.                   |
 | python     | `python314`, `uv`, `pyright`, `ruff`   | uv for env/dep management; pyright for lsp; ruff for format.               |
-| rust       | `rustc`, `cargo`, `rust-analyzer`, `rustfmt`, `clippy` | standard rust-lang toolchain, matching `rustup`'s default install. lsp & formatter on PATH. |
+| rust       | `rustc`, `cargo`, `rust-analyzer`, `rustfmt`, `clippy` | standard rust-lang toolchain, matching `rustup`'s default install. |
 
 what's *not* bundled: things like `eslint`, `prettier`, `vitest`, `golangci-lint`, `statix`, `deadnix`. those are pinnable per-project (in `package.json`, `go.mod`'s `tool` directive, etc.) and don't belong in a shared base.
 
@@ -116,6 +116,10 @@ as a baseline, tendril provides a modern set of ergonomic  CLI tools like `eza`,
 the `ide` kit is a preconfigured batteries-included neovim. users don't _need_ to use it, but if they do, they'll drop in to a fully-functional IDE, that's available anywhere a CLI is, properly wired to the rest of the env. nixvim is used to configure a `snacks.nvim`-based setup.
 
 lspconfig is set up with auto-attach for for all languages tendril knows about. lsp servers will autoattach when their binary is on PATH. this means you can, if for some reason you need to, attach an LSP than is not installed via Nix.
+
+rust-analyzer uses the Rust kit's Clippy command for save-time checking instead
+of plain `cargo check`. lint levels and options remain controlled by each
+project through `Cargo.toml`, `clippy.toml`, and source attributes.
 
 ### local AI
 
