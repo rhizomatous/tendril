@@ -65,6 +65,13 @@ let
           bigfile.enabled = true;
           dashboard = {
             enabled = true;
+            preset.header = ''
+              ,--------.                 ,--.       ,--.,--.
+              '--.  .--',---. ,--,--,  ,-|  |,--.--.`--'|  |
+                 |  |  | .-. :|      \' .-. ||  .--',--.|  |
+                 |  |  \   --.|  ||  |\ `-' ||  |   |  ||  |
+                 `--'   `----'`--'''--' `---' `--'   `--'`--'
+            '';
             # override the default key list. defaults included Config, which
             # opens `vim.fn.stdpath('config')`, which points at the user's
             # *system* nvim config.
