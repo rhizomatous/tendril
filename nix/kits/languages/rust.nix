@@ -1,4 +1,4 @@
-# the rust dev environment, expressed as a reusable `kit`.
+# The Rust dev environment.
 
 { pkgs }:
 {

@@ -1,11 +1,9 @@
-# merge a list of evaluated kits into a single combined kit.
+# Merge a list of evaluated kits into a single combined kit.
 #
 # - `packages`: concatenated and de-duplicated via `lib.unique`.
-# - `env`: merged left-to-right with `//` (later kits win on collision).
-#   if two kits set the same key we emit a `lib.warn` listing the
-#   colliding keys, so a clash doesn't slip through silently. consumer
-#   overrides via `mkShell`'s `extraEnv` happen *after* this merge and are
-#   intentional, so they don't trigger the warning.
+# - `env`: merged left-to-right with `//`). If two kits set the same key we emit a `lib.warn` listing the
+#   colliding keys. consumer overrides via `mkShell`'s `extraEnv` happen *after* this merge and are
+#   intentional, so they are excluded from the warning.
 # - `shellHook`: non-empty hooks joined with newlines.
 
 { lib }:

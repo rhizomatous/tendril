@@ -1,22 +1,11 @@
-# tendril's flake. exposes a dev shell, plus a matching docker image and NixOS
-# VM for linux.
-#
-# consumers pin a single input:
-#   inputs.tendril.url = "github:rhizomatous/tendril";
-# and reach everything via:
-#   tendril.devShells.<sys>.default       (polyglot dev shell)
-#   tendril.devShells.<sys>.ollama        (dev shell plus local AI)
-#   tendril.packages.<linux-sys>.default  (docker image)
-#   tendril.packages.<linux-sys>.vm       (runnable NixOS VM)
-#
-# also activated by the repo's own `.envrc` for working on tendril itself.
+# Tendril is a polyglot, AI-enabled, local development environment.
 {
-  description = "tendril: polyglot dev environment";
+  description = "Tendril: polyglot local AI dev environment";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # nixvim, the declarative neovim config framework. used by `nix/kits/ide.nix`.
+    # used by `nix/kits/ide.nix`.
     nixvim = {
       url = "github:nix-community/nixvim";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -30,28 +19,28 @@
       nixvim,
     }:
     let
-      # helpers
+      # Helpers
       forAllSystems = import ./nix/utils/forAllSystems.nix { inherit nixpkgs; };
 
-      # cross-cutting kit factories
+      # Tools
       coreToolsKit = import ./nix/kits/core-tools.nix;
       ideKit = import ./nix/kits/ide.nix { inherit nixvim; };
       agentKit = import ./nix/kits/agent.nix;
       ollamaKit = import ./nix/kits/ollama.nix;
 
-      # builders
+      # Builders
       mkShell = import ./nix/builders/mkShell.nix;
       mkDockerImage = import ./nix/builders/mkDockerImage.nix;
       mkNixosVm = import ./nix/builders/mkNixosVm.nix { inherit nixpkgs; };
 
-      # docker images need linux pkgs, so we can't build on MacOS right now
+      # Docker images need Linux pkgs
       linuxSystems = [
         "x86_64-linux"
         "aarch64-linux"
       ];
       forLinuxSystems = nixpkgs.lib.genAttrs linuxSystems;
 
-      # Registry of language kits included in Tendril.
+      # Languages
       languages = {
         go = import ./nix/kits/languages/go.nix;
         nix = import ./nix/kits/languages/nix.nix;
@@ -89,8 +78,7 @@
         }
       );
 
-      # The docker image and NixOS VM parallel the dev shell. Linux only, see
-      # `linuxSystems` above for why.
+      # The Docker image and NixOS VM parallel the dev shell. Linux only.
       packages = forLinuxSystems (
         system:
         let

@@ -1,3 +1,9 @@
+# A configured Ollama instance, for hosting local open models.
+#
+# A hook is configured to autolaunch Ollama, if it's not already running.
+# If no models are installed, it will prompt the user with a set of
+# sensible defaults.
+
 { pkgs }:
 let
   models = [

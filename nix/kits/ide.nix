@@ -1,8 +1,7 @@
-# the ide kit, a configured nvim.
+# A configured nvim.
 
-# the bulk of this file is `nixvimModule`, tendril's nvim configuration as
-# a nixvim module. see https://nix-community.github.io/nixvim/ for option
-# docs.
+# The bulk of this file is `nixvimModule`.
+# see https://nix-community.github.io/nixvim/ for option docs.
 
 { nixvim }:
 
@@ -57,8 +56,7 @@ let
     };
 
     plugins = {
-      # snacks.nvim: folke's swiss-army of QoL features (dashboard, picker,
-      # notifier, indent guides, scope, statuscolumn, terminal).
+      # snacks.nvim: folke's swiss-army of QoL features
       snacks = {
         enable = true;
         settings = {
@@ -72,7 +70,7 @@ let
                  |  |  \   --.|  ||  |\ `-' ||  |   |  ||  |
                  `--'   `----'`--'''--' `---' `--'   `--'`--'
             '';
-            # override the default key list. defaults included Config, which
+            # Override the default key list to exclude Config, which
             # opens `vim.fn.stdpath('config')`, which points at the user's
             # *system* nvim config.
             preset.keys = [
@@ -109,7 +107,7 @@ let
             ];
             # snacks's default dashboard includes a `startup` section with
             # `require('lazy.stats')`, which fails because we're nix-managed
-            # not lazy.nvim. so, drop that one.
+            # not lazy.nvim. So, drop that one.
             sections = [
               { section = "header"; }
               {
@@ -154,9 +152,7 @@ let
         };
       };
 
-      # LSP auto-attach for the language servers tendril ships in its language
-      # kits. servers only attach when the binary is on PATH. opening a
-      # `.go` file in the typescript shell won't try to run gopls.
+      # LSP auto-attach
       lsp = {
         enable = true;
         servers = {
@@ -175,7 +171,7 @@ let
           };
           rust_analyzer = {
             enable = true;
-            # rustc & cargo come from the rust language kit, on PATH. tell
+            # rustc & cargo come from the rust language kit, on PATH. Tell
             # nixvim not to bring its own copies into the closure.
             installCargo = false;
             installRustc = false;
@@ -254,7 +250,7 @@ let
         options.desc = "buffers";
       }
 
-      # sidekick / opencode
+      # Sidekick / OpenCode
       {
         mode = [
           "n"
@@ -264,25 +260,25 @@ let
         ];
         key = "<C-.>";
         action.__raw = ''function() require("sidekick.cli").focus() end'';
-        options.desc = "focus sidekick";
+        options.desc = "focus Sidekick";
       }
       {
         mode = "n";
         key = "<leader>aa";
         action.__raw = ''function() require("sidekick.cli").toggle({ name = "opencode", focus = true }) end'';
-        options.desc = "toggle opencode";
+        options.desc = "toggle OpenCode";
       }
       {
         mode = "n";
         key = "<leader>as";
         action.__raw = ''function() require("sidekick.cli").select({ filter = { installed = true } }) end'';
-        options.desc = "select AI CLI";
+        options.desc = "select AI tool";
       }
       {
         mode = "n";
         key = "<leader>ad";
         action.__raw = ''function() require("sidekick.cli").close() end'';
-        options.desc = "detach AI CLI session";
+        options.desc = "detach AI session";
       }
       {
         mode = [
@@ -291,19 +287,19 @@ let
         ];
         key = "<leader>at";
         action.__raw = ''function() require("sidekick.cli").send({ msg = "{this}" }) end'';
-        options.desc = "send this to AI CLI";
+        options.desc = "send this to AI";
       }
       {
         mode = "n";
         key = "<leader>af";
         action.__raw = ''function() require("sidekick.cli").send({ msg = "{file}" }) end'';
-        options.desc = "send file to AI CLI";
+        options.desc = "send file to AI";
       }
       {
         mode = "x";
         key = "<leader>av";
         action.__raw = ''function() require("sidekick.cli").send({ msg = "{selection}" }) end'';
-        options.desc = "send selection to AI CLI";
+        options.desc = "send selection to AI";
       }
       {
         mode = [

@@ -1,18 +1,18 @@
-# tendril's base tools kit. shell fundamentals, version control, repo tooling,
-# and modern unix utilities every tendril env should have.
+# Tendril's base tools kit, containing modern Unix utilities
+# that every shell should have.
 
 { pkgs }:
 {
   packages = with pkgs; [
-    # shell fundamentals
+    # Shell fundamentals
     bashInteractive
     coreutils
 
-    # version control & repo tooling
+    # Version control & repo tooling
     git
-    lefthook # git hooks runner
+    lefthook # Git hooks runner
 
-    # modern unix utilities
+    # Modern unix utilities
     bat # `cat` with syntax highlighting
     eza # `ls` with colors & git integration
     ripgrep # fast `grep`

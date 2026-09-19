@@ -1,17 +1,6 @@
-# build a dev shell from a list of `kit` attrsets (plus optional consumer
-# extras).
+# Build a dev shell from a list of `kit` attrsets.
 #
-# `pkgs.mkShell` is nixpkgs' helper for declaring a development environment
-# (the thing you enter via `nix develop`). it accepts:
-#   - `packages`:  tools made available on PATH inside the shell
-#   - `shellHook`: bash run on shell entry
-#   - any other attribute name: exported as an env var inside the shell
-#
-# a `kit` is the unit of reuse, shape:
-#   { packages = [...]; env = { FOO = "bar"; }; shellHook = "..."; }
-# we accept a list and merge them via `mergeKits`, then layer on consumer
-# extras. taking a list lets the caller compose ide & language & whatever
-# without re-deriving the merge logic.
+# The list gets merged, then any consumer extras are layered on.
 
 {
   pkgs,
@@ -30,7 +19,6 @@ pkgs.mkShell (
     packages = merged.packages ++ extraPackages;
     shellHook = merged.shellHook + extraShellHook;
   }
-  # `//` is nix's attrset-merge operator (right-hand wins on duplicate keys).
   # kit env vars first, then consumer overrides.
   // merged.env
   // extraEnv

@@ -1,11 +1,10 @@
-# build a docker image from a list of `kit` attrsets.
-# `shellHook` doesn't really translate to a docker image, so it's ignored
-# here. consumers wanting startup commands can pass `entrypoint`.
+# Build a Docker image from a list of `kit` attrsets.
 #
-# `pkgs` must be a Linux pkgs (`x86_64-linux` or `aarch64-linux`). using
-# darwin pkgs would build darwin binaries, which won't run inside the
-# linux container the image describes. the umbrella's `packages.<sys>`
-# output restricts itself to linux systems for this reason.
+# `shellHook` doesn't really translate to a docker image, so it's ignored
+# here. Consumers wanting startup commands can pass `entrypoint`.
+#
+# `pkgs` must be a Linux pkgs (`x86_64-linux` or `aarch64-linux`) to create
+# a usable image.
 
 {
   pkgs,
@@ -29,8 +28,8 @@ pkgs.dockerTools.buildLayeredImage {
   inherit name tag;
   contents = merged.packages;
 
-  # buildLayeredImage doesn't auto-create `WorkingDir`. do it ourselves so
-  # `docker run` doesn't fail trying to chdir into a missing path.
+  # `buildLayeredImage` doesn't auto-create `WorkingDir`. Do it ourselves so
+  # `docker run` doesn't fail trying to `chdir` into a missing path.
   extraCommands = ''
     mkdir -p ${pkgs.lib.removePrefix "/" workingDir}
   '';

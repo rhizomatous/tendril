@@ -1,5 +1,3 @@
-# tendril's git hooks, run via lefthook (https://lefthook.dev).
-
 pre-commit:
   parallel: true
   commands:

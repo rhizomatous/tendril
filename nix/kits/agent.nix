@@ -1,4 +1,4 @@
-# tendril's agent kit: opencode.
+# An agent harness.
 
 { pkgs }:
 {

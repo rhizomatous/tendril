@@ -6,7 +6,7 @@ result-*
 .direnv/
 .envrc.local
 
-# editor / OS
+# Editor / OS
 .DS_Store
 *.swp
 *.swo
