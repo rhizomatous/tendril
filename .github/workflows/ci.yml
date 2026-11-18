@@ -22,3 +22,6 @@ jobs:
         run: |
           nix develop -c bash -c \
             'find . -name "*.nix" -not -path "./.git/*" | xargs nixfmt --check'
+
+      - name: shell smoke test
+        run: nix develop -c bash tests/shell-smoke.sh
